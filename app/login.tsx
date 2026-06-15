@@ -82,6 +82,28 @@ const [password, setPassword] = useState('');
         </Text>
         </TouchableOpacity>
 
+        <TouchableOpacity
+          style={{
+            backgroundColor: '#F0F0F2',
+            width: 130,
+            height: 45,
+            justifyContent: 'center',
+            alignItems: 'center',
+            marginTop: 20,
+          }}
+          onPress={() => router.push('/register')}
+        >
+          <Text
+            style={{
+              color: '#10172B',
+              fontSize: 16,
+              fontWeight: 'bold',
+            }}
+          >
+            Crear cuenta
+          </Text>
+        </TouchableOpacity>
+
     </View>
   );
 }
