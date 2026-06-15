@@ -1,6 +1,9 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { createUserWithEmailAndPassword } from 'firebase/auth';
+import {
+  createUserWithEmailAndPassword,
+  sendEmailVerification,
+} from 'firebase/auth';
 import { auth } from './firebase/config';
 import {
   View,
@@ -38,11 +41,13 @@ export default function RegisterScreen() {
         password
       );
 
-    alert('Cuenta creada correctamente');
+    await sendEmailVerification(userCredential.user);
+
+    alert('Se envió un correo de verificación');
 
     console.log(userCredential.user);
 
-    router.push('/login');
+    router.push('/verify-email');
 
   } catch (error: any) {
     alert(error.message);
