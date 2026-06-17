@@ -69,7 +69,7 @@ const [password, setPassword] = useState('');
             justifyContent: 'center',
             alignItems: 'center',
         }}
-        onPress={() => alert('Button pressed')}
+        onPress={() => router.replace('/home')}
         >
         <Text
             style={{
