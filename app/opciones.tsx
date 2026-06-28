@@ -56,7 +56,7 @@ export default function OpcionesScreen() {
         Opciones
       </Text>
 
-      <View
+      <TouchableOpacity
         style={{
           position: 'absolute',
           right: 20,
@@ -68,11 +68,12 @@ export default function OpcionesScreen() {
           justifyContent: 'center',
           alignItems: 'center',
         }}
+        onPress={() => router.push('/perfil')}
       >
         <Text style={{ fontSize: 35 }}>
           👤
         </Text>
-      </View>
+      </TouchableOpacity>
 
       <View
         style={{
