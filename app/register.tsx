@@ -33,6 +33,26 @@ export default function RegisterScreen() {
     return;
   }
 
+  if (
+    !nombre ||
+    !apellido ||
+    !telefono ||
+    !dni ||
+    !fechaNacimiento ||
+    !ocupacion ||
+    !email ||
+    !password ||
+    !confirmPassword
+  ) {
+    alert('Complete todos los campos');
+    return;
+  }
+
+  if (password.length < 6) {
+    alert('La contraseña debe tener al menos 6 caracteres');
+    return;
+  }
+
   try {
     const userCredential =
       await createUserWithEmailAndPassword(
