@@ -2,6 +2,7 @@ import { View, Text, TouchableOpacity, Switch } from 'react-native';
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { Picker } from '@react-native-picker/picker';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function ConfigGestosScreen() {
   const [apagado, setApagado] = useState(true);
@@ -9,7 +10,7 @@ export default function ConfigGestosScreen() {
   const [alerta, setAlerta] = useState('');
 
   return (
-    <View
+    <SafeAreaView
       style={{
         flex: 1,
         backgroundColor: '#10172B',
@@ -101,7 +102,7 @@ export default function ConfigGestosScreen() {
           <Picker.Item label="Disparos de arma de fuego" value="Disparos de arma de fuego" />
         </Picker>
       </View>
-    </View>
+    </SafeAreaView>
   );
 }
 

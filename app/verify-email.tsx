@@ -7,6 +7,7 @@ import {
 import { StatusBar } from 'expo-status-bar';
 import { router } from 'expo-router';
 import { auth } from './firebase/config';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const icon = require('../assets/images/logo_egida.png');
 
@@ -27,7 +28,7 @@ export default function VerifyEmailScreen() {
 };
 
   return (
-    <View
+    <SafeAreaView
       style={{
         flex: 1,
         backgroundColor: '#10172B',
@@ -102,6 +103,6 @@ export default function VerifyEmailScreen() {
           Ya verifiqué mi correo
         </Text>
       </TouchableOpacity>
-    </View>
+    </SafeAreaView>
   );
 }

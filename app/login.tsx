@@ -68,7 +68,7 @@ export default function LoginScreen() {
       setIsLoading(false);
     }
   };
-
+  
   return (
     <View style={styles.container}>
       <StatusBar style="light" />
@@ -132,15 +132,15 @@ const styles = {
   container: {
     flex: 1,
     backgroundColor: '#10172B',
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: 'center' as const,
+    alignItems: 'center' as const,
     paddingHorizontal: 25,
   },
   logo: { width: 180, height: 180, marginBottom: 20 },
-  title: { color: '#F0F0F2', fontSize: 22, fontWeight: 'bold', marginBottom: 30 },
+  title: { color: '#F0F0F2', fontSize: 22, fontWeight: 'bold' as const, marginBottom: 30 },
   input: {
     backgroundColor: '#F0F0F2',
-    width: '100%',
+    width: '100%' as const,
     maxWidth: 320,
     height: 48,
     marginBottom: 15,
@@ -149,18 +149,18 @@ const styles = {
     color: '#000',
     fontSize: 15,
   },
-  forgotContainer: { alignSelf: 'flex-end', marginBottom: 25, maxWidth: 320, width: '100%' },
-  forgotText: { color: '#A0AABF', fontSize: 13, textAlign: 'right' },
+  forgotContainer: { alignSelf: 'flex-end' as const, marginBottom: 25 as const, maxWidth: 320 as const, width: '100%' as const},
+  forgotText: { color: '#A0AABF', fontSize: 13, textAlign: 'right' as const },
   disabledText: { opacity: 0.5 },
   button: {
     backgroundColor: '#F0F0F2',
     width: 150,
     height: 48,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: 'center' as const,
+    alignItems: 'center' as const,
     borderRadius: 6,
     marginBottom: 15,
   },
   buttonDisabled: { opacity: 0.7 },
-  buttonText: { color: '#10172B', fontSize: 16, fontWeight: 'bold' },
+  buttonText: { color: '#10172B', fontSize: 16, fontWeight: 'bold' as const },
 };

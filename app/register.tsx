@@ -13,6 +13,8 @@ import {
   View
 } from 'react-native';
 import { auth } from './firebase/config'; // Ajusta la ruta según tu estructura
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { StyleSheet } from 'react-native';
 
 const icon = require('../assets/images/logo_egida.png');
 
@@ -97,7 +99,7 @@ export default function RegisterScreen() {
   };
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <StatusBar style="light" />
 
       {/* Botón Volver */}
@@ -175,12 +177,11 @@ export default function RegisterScreen() {
       <TouchableOpacity style={styles.button} onPress={register}>
         <Text style={styles.buttonText}>Crear cuenta</Text>
       </TouchableOpacity>
-    </View>
+    </SafeAreaView>
   );
 }
 
-const styles = {
-  container: { flex: 1, backgroundColor: '#10172B', alignItems: 'center', paddingTop: 60, paddingHorizontal: 20 },
+const styles = StyleSheet.create({  container: { flex: 1, backgroundColor: '#10172B', alignItems: 'center', paddingTop: 60, paddingHorizontal: 20 },
   backButton: { position: 'absolute', left: 20, top: 50, zIndex: 10, padding: 10 },
   backArrow: { color: 'white', fontSize: 30, fontWeight: 'bold' },
   logo: { width: 140, height: 140, marginBottom: 10 },
@@ -196,4 +197,4 @@ const styles = {
   modalContent: { backgroundColor: '#FFF', borderRadius: 16, padding: 20, alignItems: 'center', width: '85%', maxWidth: 350 },
   modalCloseButton: { marginTop: 15, paddingVertical: 10, paddingHorizontal: 30, backgroundColor: '#10172B', borderRadius: 6 },
   modalCloseText: { color: '#FFF', fontWeight: 'bold', fontSize: 15 },
-};
+});

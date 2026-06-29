@@ -4,10 +4,11 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { router } from 'expo-router';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function PerfilScreen() {
   return (
-    <View
+    <SafeAreaView
       style={{
         flex: 1,
         backgroundColor: '#10172B',
@@ -91,7 +92,7 @@ export default function PerfilScreen() {
           </Text>
         </TouchableOpacity>
       </View>
-    </View>
+    </SafeAreaView>
   );
 }
 
