@@ -6,15 +6,30 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function AlertaScreen() {
   const [motivo, setMotivo] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleEnviarAlerta = () => {
+  const handleEnviarAlerta = async () => {
     if (!motivo) {
       Alert.alert('Error', 'Por favor seleccione un motivo antes de enviar.');
       return;
     }
-    
-    // Aquí irá la lógica de Firebase más adelante
-    Alert.alert('Égida', `Alerta de ${motivo} enviada a la red.`);
+
+    setIsLoading(true);
+
+    try {
+      // TODO: Aquí irá la lógica de Firebase / Backend C# para guardar la alerta
+      // await crearAlerta({ motivo, timestamp: new Date(), userId: ... });
+      
+      console.log(`✅ Alerta de "${motivo}" enviada exitosamente.`);
+      
+      // Redirección inmediata al mapa según métrica de éxito del MVP
+      router.replace('/home'); 
+      
+    } catch (error) {
+      console.error('Error al enviar alerta:', error);
+      Alert.alert('Error', 'No se pudo enviar la alerta. Verifique su conexión.');
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -46,22 +61,24 @@ export default function AlertaScreen() {
           </Picker>
         </View>
 
-        {/* Botón de Acción - Empujado al fondo con marginTop: 'auto' */}
+        {/* Botón de Acción */}
         <TouchableOpacity
           style={{
-            backgroundColor: '#FF4444',
+            backgroundColor: isLoading ? '#CC3333' : '#FF4444',
             width: '100%',
             height: 60,
             justifyContent: 'center',
             alignItems: 'center',
             borderRadius: 12,
-            marginTop: 'auto', // Esto lo pega al fondo dinámicamente
+            marginTop: 'auto',
             marginBottom: 20,
+            opacity: isLoading ? 0.8 : 1,
           }}
           onPress={handleEnviarAlerta}
+          disabled={isLoading}
         >
           <Text style={{ fontWeight: 'bold', color: 'white', fontSize: 18 }}>
-            ENVIAR ALERTA
+            {isLoading ? 'ENVIANDO...' : 'ENVIAR ALERTA'}
           </Text>
         </TouchableOpacity>
       </View>
