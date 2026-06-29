@@ -67,13 +67,15 @@ export default function alertaopcScreen() {
           </Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.button}>
+        <TouchableOpacity style={styles.button}
+        onPress={() => router.push('/config-sonidos')}>
           <Text style={styles.text}>
             Sonidos
           </Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.button}>
+        <TouchableOpacity style={styles.button}
+        onPress={() => router.push('/emergencias')}>
           <Text style={styles.text}>
             Contactos de emergencia
           </Text>
