@@ -80,6 +80,7 @@ export default function PerfilScreen() {
             justifyContent: 'center',
             alignItems: 'center',
           }}
+          onPress={() => router.push('/privacidad')}
         >
           <Text
             style={{

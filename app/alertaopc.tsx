@@ -6,23 +6,9 @@ import {
 } from 'react-native';
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { signOut } from 'firebase/auth';
-import { auth } from './firebase/config';
 
-export default function OpcionesScreen() {
+export default function alertaopcScreen() {
   const [mostrarModal, setMostrarModal] = useState(false);
-
-  const cerrarSesion = async () => {
-    try {
-      await signOut(auth);
-
-      setMostrarModal(false);
-
-      router.replace('/login');
-    } catch (error) {
-      alert('Error al cerrar sesión');
-    }
-  };
 
   return (
     <View
@@ -50,81 +36,48 @@ export default function OpcionesScreen() {
           color: 'white',
           fontSize: 32,
           fontWeight: 'bold',
+          alignSelf: 'center',
           marginTop: 50,
+          textAlign: 'center',
         }}
       >
-        Opciones
+        Configuración{"\n"}de alertas
       </Text>
-
-      <TouchableOpacity
-        style={{
-          position: 'absolute',
-          right: 20,
-          top: 40,
-          width: 60,
-          height: 60,
-          borderRadius: 30,
-          backgroundColor: 'white',
-          justifyContent: 'center',
-          alignItems: 'center',
-        }}
-        onPress={() => router.push('/perfil')}
-      >
-        <Text style={{ fontSize: 35 }}>
-          👤
-        </Text>
-      </TouchableOpacity>
 
       <View
         style={{
-          marginTop: 190,
+          marginTop: 160,
           gap: 25,
         }}
       >
-        <TouchableOpacity
-          style={styles.button}
-          onPress={() => router.push('/alertaopc')}
+        <TouchableOpacity style={styles.button}
+        onPress={() => router.push('/gestos')}
         >
           <Text style={styles.text}>
-            Alertas
+            Gestos
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.button}>
+          <Text style={styles.text}
+          onPress={() => router.push('/config-notificaciones')}
+          >
+            Notificaciones
           </Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.button}>
           <Text style={styles.text}>
-            Historial
+            Sonidos
           </Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.button}>
           <Text style={styles.text}>
-            Comunidad
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.button}>
-          <Text style={styles.text}>
-            Chat de la red
+            Contactos de emergencia
           </Text>
         </TouchableOpacity>
       </View>
-
-      <TouchableOpacity
-        style={{
-          position: 'absolute',
-          bottom: 80,
-        }}
-        onPress={() => setMostrarModal(true)}
-      >
-        <Text
-          style={{
-            color: 'red',
-            fontWeight: 'bold',
-          }}
-        >
-          Cerrar sesión
-        </Text>
-      </TouchableOpacity>
 
       <Modal
         visible={mostrarModal}
@@ -191,19 +144,6 @@ export default function OpcionesScreen() {
                   Cancelar
                 </Text>
               </TouchableOpacity>
-
-              <TouchableOpacity
-                onPress={cerrarSesion}
-              >
-                <Text
-                  style={{
-                    backgroundColor: 'white',
-                    padding: 8,
-                  }}
-                >
-                  Aceptar
-                </Text>
-              </TouchableOpacity>
             </View>
           </View>
         </View>
@@ -223,6 +163,7 @@ const styles = {
 
   text: {
     fontWeight: 'bold' as const,
+    textAlign: 'center' as const,
     color: '#10172B',
     fontSize: 20,
   },

@@ -2,56 +2,13 @@ import { router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { getAuth, sendPasswordResetEmail } from 'firebase/auth';
 import { useState } from 'react';
-import { Alert, Image, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 const icon = require('../assets/images/logo_egida.png');
 
-export default function LoginScreen() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+export default function HomeScreen() {
 
-  const handleForgotPassword = async () => {
-    // Validación básica antes de llamar a Firebase
-    if (!email || !email.includes('@')) {
-      Alert.alert(
-        'Atención', 
-        'Por favor ingresa tu correo electrónico en el campo superior antes de solicitar recuperación.'
-      );
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      const auth = getAuth();
-      await sendPasswordResetEmail(auth, email);
-      
-      Alert.alert(
-        'Correo enviado', 
-        'Revisa tu bandeja de entrada (y spam). El link de restablecimiento es válido por 1 hora.',
-        [{ text: 'Entendido' }]
-      );
-    } catch (error: any) {
-      let mensaje = 'Ocurrió un error al procesar tu solicitud.';
-      
-      // Traducción de errores de Firebase para mejor UX
-      switch (error.code) {
-        case 'auth/user-not-found':
-          mensaje = 'No encontramos una cuenta asociada a ese correo electrónico.';
-          break;
-        case 'auth/invalid-email':
-          mensaje = 'El formato del correo electrónico no es válido.';
-          break;
-        case 'auth/too-many-requests':
-          mensaje = 'Demasiados intentos. Por favor espera unos minutos y vuelve a intentar.';
-          break;
-      }
-      
-      Alert.alert('Error', mensaje);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+const [email, setEmail] = useState('');
+const [password, setPassword] = useState('');
 
   return (
     <View style={styles.container}>
@@ -77,19 +34,35 @@ export default function LoginScreen() {
         secureTextEntry
         value={password}
         onChangeText={setPassword}
-        style={styles.input}
-      />
+        style={{
+            backgroundColor: '#F0F0F2',
+            width: 250,
+            height: 40,
+            marginBottom: 20,
+            paddingHorizontal: 10,
+        }}
+        />
 
-      {/* BOTÓN DE RECUPERACIÓN INTEGRADO CON FIREBASE */}
-      <TouchableOpacity
-        onPress={handleForgotPassword}
-        disabled={isLoading}
-        style={styles.forgotContainer}
-      >
-        <Text style={[styles.forgotText, isLoading && styles.disabledText]}>
-          ¿Olvidó su contraseña?
+        <TouchableOpacity
+        style={{
+            backgroundColor: '#F0F0F2',
+            width: 130,
+            height: 45,
+            justifyContent: 'center',
+            alignItems: 'center',
+        }}
+        onPress={() => router.replace('/home')}
+        >
+        <Text
+            style={{
+            color: '#10172B',
+            fontSize: 16,
+            fontWeight: 'bold',
+            }}
+        >
+            Iniciar sesión
         </Text>
-      </TouchableOpacity>
+        </TouchableOpacity>
 
       <TouchableOpacity
         style={[styles.button, isLoading && styles.buttonDisabled]}
