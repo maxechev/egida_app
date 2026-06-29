@@ -9,12 +9,47 @@ import { StatusBar } from 'expo-status-bar';
 import { router } from 'expo-router';
 import { useState } from 'react';
 
+import { signInWithEmailAndPassword } from 'firebase/auth';
+import { auth } from './firebase/config';
+
 const icon = require('../assets/images/logo_egida.png');
 
 export default function HomeScreen() {
 
 const [email, setEmail] = useState('');
 const [password, setPassword] = useState('');
+
+const login = async () => {
+  if (!email || !password) {
+    alert('Complete correo y contraseña');
+    return;
+  }
+
+  try {
+    await signInWithEmailAndPassword(
+      auth,
+      email,
+      password
+    );
+
+    router.replace('/home');
+  } catch (error: any) {
+    switch (error.code) {
+      case 'auth/invalid-credential':
+        alert('Correo o contraseña incorrectos.');
+        break;
+
+      case 'auth/network-request-failed':
+        alert('Sin conexión a Internet.');
+        break;
+
+      default:
+        console.log(error);
+        alert('Ocurrió un error al iniciar sesión.');
+        break;
+    }
+  }
+};
 
   return (    
     <View
@@ -62,24 +97,24 @@ const [password, setPassword] = useState('');
         />
 
         <TouchableOpacity
-        style={{
+          style={{
             backgroundColor: '#F0F0F2',
             width: 130,
             height: 45,
             justifyContent: 'center',
             alignItems: 'center',
-        }}
-        onPress={() => router.replace('/home')}
+          }}
+          onPress={login}
         >
-        <Text
+          <Text
             style={{
-            color: '#10172B',
-            fontSize: 16,
-            fontWeight: 'bold',
+              color: '#10172B',
+              fontSize: 16,
+              fontWeight: 'bold',
             }}
-        >
+          >
             Iniciar sesión
-        </Text>
+          </Text>
         </TouchableOpacity>
 
         <TouchableOpacity
