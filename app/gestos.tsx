@@ -1,13 +1,14 @@
 import { View, Text, TouchableOpacity, Switch } from 'react-native';
 import { router } from 'expo-router';
 import { useState } from 'react';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function GestosScreen() {
   const [gestos, setGestos] = useState(true);
   const [quickSettings, setQuickSettings] = useState(true);
 
   return (
-    <View
+    <SafeAreaView
       style={{
         flex: 1,
         backgroundColor: '#10172B',
@@ -83,7 +84,7 @@ export default function GestosScreen() {
           Configuración de gestos
         </Text>
       </TouchableOpacity>
-    </View>
+    </SafeAreaView>
   );
 }
 

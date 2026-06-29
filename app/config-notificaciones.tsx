@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, Switch } from 'react-native';
+import { View, Text, TouchableOpacity, Switch, Pressable, SafeAreaView } from 'react-native';
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { Picker } from '@react-native-picker/picker';
@@ -6,10 +6,11 @@ import { Picker } from '@react-native-picker/picker';
 export default function ConfiNotificacionesScreen() {
   const [Notificaciones, setNotificaciones] = useState(true);
   const [vibracion, setVibracion] = useState(true);
-  const [alerta, setAlerta] = useState('');
+  const [alertas, setAlertas] = useState<string[]>([]);
+  const [mostrarLista, setMostrarLista] = useState(false);
 
   return (
-    <View
+    <SafeAreaView
       style={{
         flex: 1,
         backgroundColor: '#10172B',
@@ -75,35 +76,77 @@ export default function ConfiNotificacionesScreen() {
                 />
               </View>
             </View>
+        <View style={styles.selector}>
 
-      <View
-        style={{
-          backgroundColor: 'white',
-          width: 250,
-          alignSelf: 'center',
-          marginTop: 20,
-        }}
-      >
-        <Picker
-          selectedValue={alerta}
-          onValueChange={(itemValue) =>
-            setAlerta(itemValue)
-          }
-        >
-          <Picker.Item
-            label="Prioridad"
-            value=""
-          />
+            <Pressable
+              style={styles.prioridad}
+              onPress={() => setMostrarLista(!mostrarLista)}
+            >
+              <Text style={{ fontSize: 18, fontWeight:'bold' }}>
+                Prioridad
+              </Text>
 
-          <Picker.Item label="Robo" value="Robo" />
-          <Picker.Item label="Secuestro de vehículo" value="Secuestro de vehículo" />
-          <Picker.Item label="Hallanamiento" value="Hallanamiento" />
-          <Picker.Item label="Secuestro" value="Secuestro" />
-          <Picker.Item label="Actividad sospechosa" value="Actividad sospechosa" />
-          <Picker.Item label="Disparos de arma de fuego" value="Disparos de arma de fuego" />
-        </Picker>
-      </View>
-    </View>
+              <View
+                style={[
+                  styles.arrow,
+                  mostrarLista && styles.arrowUp
+                ]}
+              />
+
+            </Pressable>
+
+
+            {mostrarLista && (
+              <View style={styles.lista}>
+
+                {[
+                  'Robo',
+                  'Secuestro de vehículo',
+                  'Hallanamiento',
+                  'Secuestro',
+                  'Actividad sospechosa',
+                  'Disparos de arma de fuego',
+                ].map((item) => (
+
+                  <Pressable
+                    key={item}
+                    style={styles.item}
+                    onPress={() => {
+                      setAlertas((prev) =>
+                        prev.includes(item)
+                          ? prev.filter((x) => x !== item)
+                          : [...prev, item]
+                      );
+                    }}
+                  >
+
+                    <Text style={styles.itemText}>
+                      {item}
+                    </Text>
+
+
+                    <View
+                      style={[
+                        styles.checkbox,
+                        alertas.includes(item) && styles.checked,
+                      ]}
+                    >
+                      {alertas.includes(item) && (
+                        <Text style={styles.check}>
+                          ✓
+                        </Text>
+                      )}
+                    </View>
+
+                  </Pressable>
+
+                ))}
+
+              </View>
+            )}
+
+          </View>
+</SafeAreaView>
   );
 }
 
@@ -144,4 +187,78 @@ card: {
     fontSize: 18,
     fontWeight: 'bold' as const,
   },
+  lista: {
+  backgroundColor: 'white',
+  width: 250,
+  alignSelf: 'center' as const,
+  marginTop: 20 as const,
+},
+
+item: {
+  flexDirection: 'row' as const,
+  justifyContent: 'space-between' as const,
+  alignItems: 'center' as const,
+  paddingHorizontal: 10 as const,
+  paddingVertical: 10 as const,
+  borderBottomWidth: 1 as const,
+  borderColor: '#ddd' as const,
+},
+
+itemText: {
+  color: '#333' as const,
+  fontSize: 14 as const,
+  width: 190 as const,
+},
+
+checkbox: {
+  width: 16,
+  height: 16,
+  borderWidth: 2,
+  borderColor: '#333',
+  alignItems: 'center' as const,
+  justifyContent: 'center' as const,
+},
+
+checked: {
+  backgroundColor: '#26200F',
+  borderColor: '#26200F',
+},
+
+check: {
+  color: 'white',
+  fontSize: 9,
+  fontWeight: 'bold' as const,
+},
+
+selector: {
+  backgroundColor: 'white',
+  width: 250,
+  alignSelf: 'center' as const,
+  marginTop: 20,
+},
+
+prioridad: {
+  flexDirection: 'row' as const,
+  justifyContent: 'space-between' as const,
+  alignItems: 'center' as const,
+  paddingHorizontal: 25,
+  height: 60,
+},
+arrow: {
+  width: 10,
+  height: 10,
+  borderRightWidth: 2,
+  borderBottomWidth: 2,
+  borderColor: '#222',
+  transform: [
+    { rotate: '45deg' }
+  ],
+  marginRight: 5,
+},
+
+arrowUp: {
+  transform: [
+    { rotate: '225deg' }
+  ],
+},
 };

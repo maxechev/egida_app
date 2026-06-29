@@ -3,6 +3,7 @@ import { View, TouchableOpacity, Text } from 'react-native';
 import MapView from 'react-native-maps';
 import * as Location from 'expo-location';
 import { router } from 'expo-router';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const darkMapStyle = [
   {
@@ -85,7 +86,7 @@ export default function HomeScreen() {
   }
 
   return (
-    <View style={{ flex: 1 }}>
+    <SafeAreaView style={{ flex: 1 }}>
       <MapView
         ref={mapRef}
         style={{ flex: 1 }}
@@ -172,6 +173,6 @@ export default function HomeScreen() {
             <Text style={{ color: 'white', fontSize: 30, marginLeft: 40 }}>◎</Text>
         </TouchableOpacity>
         </View>
-    </View>
+    </SafeAreaView>
   );
 }

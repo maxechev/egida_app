@@ -8,6 +8,7 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import { signOut } from 'firebase/auth';
 import { auth } from './firebase/config';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function OpcionesScreen() {
   const [mostrarModal, setMostrarModal] = useState(false);
@@ -25,7 +26,7 @@ export default function OpcionesScreen() {
   };
 
   return (
-    <View
+    <SafeAreaView
       style={{
         flex: 1,
         backgroundColor: '#10172B',
@@ -208,7 +209,7 @@ export default function OpcionesScreen() {
           </View>
         </View>
       </Modal>
-    </View>
+    </SafeAreaView>
   );
 }
 

@@ -1,9 +1,10 @@
 import { View, Text, TouchableOpacity } from 'react-native';
 import { router } from 'expo-router';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function EmailVerifiedScreen() {
   return (
-    <View
+    <SafeAreaView
       style={{
         flex: 1,
         backgroundColor: '#10172B',
@@ -45,6 +46,6 @@ export default function EmailVerifiedScreen() {
           Continuar
         </Text>
       </TouchableOpacity>
-    </View>
+    </SafeAreaView>
   );
 }

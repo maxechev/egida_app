@@ -1,6 +1,7 @@
 import { View, Text, TouchableOpacity, Switch } from 'react-native';
 import { router } from 'expo-router';
 import { useState } from 'react';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function PrivacidadScreen() {
   const [nombreVisible, setNombreVisible] = useState(true);
@@ -8,7 +9,7 @@ export default function PrivacidadScreen() {
   const [contactoVisible, setContactoVisible] = useState(true);
 
   return (
-    <View
+    <SafeAreaView
       style={{
         flex: 1,
         backgroundColor: '#10172B',
@@ -111,7 +112,7 @@ export default function PrivacidadScreen() {
           />
         </View>
       </View>
-    </View>
+    </SafeAreaView>
   );
 }
 
