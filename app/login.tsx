@@ -1,8 +1,9 @@
+import { Ionicons } from '@expo/vector-icons'; // Librería nativa de Expo para íconos profesionales
 import { router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { getAuth, sendPasswordResetEmail, signInWithEmailAndPassword } from 'firebase/auth';
 import { useState } from 'react';
-import { Alert, Image, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Alert, Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 const icon = require('../assets/images/logo_egida.png');
 
@@ -10,8 +11,10 @@ export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  
+  // Nuevo estado para controlar la visibilidad de la contraseña
+  const [showPassword, setShowPassword] = useState(false);
 
-  // Lógica de Recuperación (Tu versión optimizada)
   const handleForgotPassword = async () => {
     if (!email || !email.includes('@')) {
       Alert.alert('Atención', 'Ingresa tu correo electrónico antes de solicitar recuperación.');
@@ -38,7 +41,6 @@ export default function LoginScreen() {
     }
   };
 
-  // Lógica de Login (Versión de tu colega integrada y estilizada)
   const login = async () => {
     if (!email || !password) {
       Alert.alert('Error', 'Complete correo y contraseña.');
@@ -82,20 +84,35 @@ export default function LoginScreen() {
         value={email}
         onChangeText={setEmail}
         keyboardType="email-address"
-        autoCapitalize="none"
+        autoCapitalize="none" // Evita que el teclado sugiera mayúsculas al inicio del email
         style={styles.input}
       />
 
-      <TextInput
-        placeholder="Contraseña"
-        placeholderTextColor="#888"
-        secureTextEntry
-        value={password}
-        onChangeText={setPassword}
-        style={styles.input}
-      />
+      {/* Contenedor relativo para posicionar el ojito dentro del input */}
+      <View style={styles.passwordContainer}>
+        <TextInput
+          placeholder="Contraseña"
+          placeholderTextColor="#888"
+          secureTextEntry={!showPassword} // Alterna entre oculto y visible
+          value={password}
+          onChangeText={setPassword}
+          autoCapitalize="none" // CRÍTICO: Evita que iOS/Android pongan mayúscula automática al primer caracter
+          style={[styles.input, styles.passwordInput]}
+        />
+        
+        <TouchableOpacity 
+          onPress={() => setShowPassword(!showPassword)}
+          style={styles.eyeButton}
+          activeOpacity={0.7}
+        >
+          <Ionicons 
+            name={showPassword ? "eye-off-outline" : "eye-outline"} 
+            size={24} 
+            color="#666" 
+          />
+        </TouchableOpacity>
+      </View>
 
-      {/* Botón de Recuperación */}
       <TouchableOpacity
         onPress={handleForgotPassword}
         disabled={isLoading}
@@ -106,7 +123,6 @@ export default function LoginScreen() {
         </Text>
       </TouchableOpacity>
 
-      {/* Botón de Login Integrado */}
       <TouchableOpacity
         style={[styles.button, isLoading && styles.buttonDisabled]}
         onPress={login}
@@ -128,19 +144,19 @@ export default function LoginScreen() {
   );
 }
 
-const styles = {
+const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#10172B',
-    justifyContent: 'center' as const,
-    alignItems: 'center' as const,
+    justifyContent: 'center',
+    alignItems: 'center',
     paddingHorizontal: 25,
   },
   logo: { width: 180, height: 180, marginBottom: 20 },
-  title: { color: '#F0F0F2', fontSize: 22, fontWeight: 'bold' as const, marginBottom: 30 },
+  title: { color: '#F0F0F2', fontSize: 22, fontWeight: 'bold', marginBottom: 30 },
   input: {
     backgroundColor: '#F0F0F2',
-    width: '100%' as const,
+    width: '100%',
     maxWidth: 320,
     height: 48,
     marginBottom: 15,
@@ -149,18 +165,38 @@ const styles = {
     color: '#000',
     fontSize: 15,
   },
-  forgotContainer: { alignSelf: 'flex-end' as const, marginBottom: 25 as const, maxWidth: 320 as const, width: '100%' as const},
-  forgotText: { color: '#A0AABF', fontSize: 13, textAlign: 'right' as const },
+  // Estilos nuevos para el campo de contraseña con ojito
+  passwordContainer: {
+    position: 'relative',
+    width: '100%',
+    maxWidth: 320,
+    marginBottom: 15,
+  },
+  passwordInput: {
+    marginBottom: 0, // Quitamos el margin bottom porque el contenedor lo maneja
+    paddingRight: 50, // Espacio interno para que el texto no se superponga con el ojo
+  },
+  eyeButton: {
+    position: 'absolute',
+    right: 12,
+    top: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: 40,
+  },
+  forgotContainer: { alignSelf: 'flex-end', marginBottom: 25, maxWidth: 320, width: '100%'},
+  forgotText: { color: '#A0AABF', fontSize: 13, textAlign: 'right' },
   disabledText: { opacity: 0.5 },
   button: {
     backgroundColor: '#F0F0F2',
     width: 150,
     height: 48,
-    justifyContent: 'center' as const,
-    alignItems: 'center' as const,
+    justifyContent: 'center',
+    alignItems: 'center',
     borderRadius: 6,
     marginBottom: 15,
   },
   buttonDisabled: { opacity: 0.7 },
-  buttonText: { color: '#10172B', fontSize: 16, fontWeight: 'bold' as const },
-};
+  buttonText: { color: '#10172B', fontSize: 16, fontWeight: 'bold' },
+});
