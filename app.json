@@ -11,8 +11,8 @@
     "ios": {
       "supportsTablet": true,
       "infoPlist": {
-        "NSLocationWhenInUseUsageDescription": "Égida necesita tu ubicación precisa para enviar alertas de seguridad.",
-        "NSLocationAlwaysAndWhenInUseUsageDescription": "Égida necesita acceso a tu ubicación para notificar alertas cercanas."
+        "NSLocationWhenInUseUsageDescription": "Égida necesita tu ubicación precisa para enviar alertas de seguridad y mostrarlas en el mapa.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "Égida necesita acceso a tu ubicación para notificar alertas cercanas en tiempo real."
       },
       "config": {
         "googleMapsApiKey": "TU_API_KEY_DE_GOOGLE_MAPS_IOS"
@@ -20,20 +20,14 @@
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#10172B",
+        "backgroundColor": "#FFFFFF",
         "foregroundImage": "./assets/images/icon.png"
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
       "permissions": [
         "ACCESS_FINE_LOCATION",
-        "ACCESS_COARSE_LOCATION",
-        "android.permission.ACCESS_COARSE_LOCATION",
-        "android.permission.ACCESS_FINE_LOCATION",
-        "ACCESS_FINE_LOCATION",
-        "ACCESS_COARSE_LOCATION",
-        "android.permission.ACCESS_COARSE_LOCATION",
-        "android.permission.ACCESS_FINE_LOCATION"
+        "ACCESS_COARSE_LOCATION"
       ],
       "config": {
         "googleMaps": {

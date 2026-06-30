@@ -19,17 +19,38 @@ const darkMapStyle = [
   { featureType: 'transit', stylers: [{ visibility: 'off' }] },
 ];
 
+// ✅ FUNCIÓN DE GEOCODIFICACIÓN INVERSA
+const getAddressFromCoords = async (lat: number, lng: number): Promise<string> => {
+  try {
+    const [address] = await Location.reverseGeocodeAsync({ latitude: lat, longitude: lng });
+    if (!address) return 'Ubicación desconocida';
+    
+    const calle = address.street || '';
+    const numero = address.streetNumber || '';
+    const ciudad = address.city || address.subregion || '';
+    
+    // Formato limpio: "Calle Número, Ciudad"
+    let direccion = `${calle} ${numero}`.trim();
+    if (ciudad) direccion += `, ${ciudad}`;
+    
+    return direccion || 'Coordenadas sin nombre de calle';
+  } catch (error) {
+    console.error('Error geocodificando:', error);
+    return 'Error al obtener dirección';
+  }
+};
+
 export default function HomeScreen() {
   const [region, setRegion] = useState<any>(null);
   const [alertas, setAlertas] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   
-  // ✅ NUEVO: Estado para controlar qué alerta mostrar en detalle
   const [alertaSeleccionada, setAlertaSeleccionada] = useState<any>(null);
   
   const mapRef = useRef<MapView>(null);
   const usuariosCache = useRef<Record<string, any>>({});
 
+  // 1. Inicializar ubicación del usuario
   useEffect(() => {
     (async () => {
       try {
@@ -50,6 +71,7 @@ export default function HomeScreen() {
     })();
   }, []);
 
+  // 2. Suscripción a alertas + Resolución de direcciones
   useEffect(() => {
     if (!region) return;
     const q = query(
@@ -58,21 +80,39 @@ export default function HomeScreen() {
       where('redId', '==', 'barrio-demo-1'),
       orderBy('timestamp', 'desc')
     );
+    
     const unsubscribe = onSnapshot(q, async (snapshot) => {
       const nuevasAlertas = await Promise.all(snapshot.docs.map(async (docSnap) => {
         const data = docSnap.data();
+        
+        // Resolución de usuario (caché)
         if (!usuariosCache.current[data.userId]) {
           try {
             const userDoc = await getDoc(doc(db, 'usuarios', data.userId));
             usuariosCache.current[data.userId] = userDoc.exists() ? userDoc.data() : { displayName: 'Vecino Anónimo' };
           } catch (e) { usuariosCache.current[data.userId] = { displayName: 'Usuario Desconocido' }; }
         }
+
+        // Resolución de fecha
         let fechaAlerta = new Date();
         if (data.timestamp && typeof data.timestamp.toDate === 'function') fechaAlerta = data.timestamp.toDate();
         else if (typeof data.timestamp === 'string') fechaAlerta = new Date(data.timestamp);
         
-        return { id: docSnap.id, ...data, usuarioInfo: usuariosCache.current[data.userId], timestamp: fechaAlerta };
+        // ✅ NUEVO: Resolución de dirección legible
+        let direccionTexto = 'Cargando ubicación...';
+        if (data.ubicacion?.lat && data.ubicacion?.lng) {
+          direccionTexto = await getAddressFromCoords(data.ubicacion.lat, data.ubicacion.lng);
+        }
+        
+        return { 
+          id: docSnap.id, 
+          ...data, 
+          usuarioInfo: usuariosCache.current[data.userId], 
+          timestamp: fechaAlerta,
+          direccionTexto: direccionTexto // Guardamos la dirección resuelta
+        };
       }));
+      
       setAlertas(nuevasAlertas);
       setLoading(false);
     });
@@ -80,8 +120,10 @@ export default function HomeScreen() {
   }, [region]);
 
   const centerOnUser = async () => {
-    const loc = await Location.getCurrentPositionAsync({});
-    mapRef.current?.animateToRegion({ ...loc.coords, latitudeDelta: 0.01, longitudeDelta: 0.01 });
+    try {
+      const loc = await Location.getCurrentPositionAsync({});
+      mapRef.current?.animateToRegion({ ...loc.coords, latitudeDelta: 0.01, longitudeDelta: 0.01 });
+    } catch (error) { console.error(error); }
   };
 
   if (!region || loading) {
@@ -97,7 +139,6 @@ export default function HomeScreen() {
             coordinate={{ latitude: alerta.ubicacion.lat, longitude: alerta.ubicacion.lng }}
             pinColor="#FF4444"
             onPress={() => {
-              // ✅ Al tocar, centramos mapa Y abrimos el overlay de detalle
               mapRef.current?.animateToRegion({ 
                 latitude: alerta.ubicacion.lat, 
                 longitude: alerta.ubicacion.lng, 
@@ -111,7 +152,7 @@ export default function HomeScreen() {
         ))}
       </MapView>
 
-      {/* ✅ OVERLAY DE DETALLE (Reemplazo seguro del Callout nativo) */}
+      {/* OVERLAY DE DETALLE */}
       <Modal visible={!!alertaSeleccionada} transparent animationType="fade">
         <Pressable style={styles.modalOverlay} onPress={() => setAlertaSeleccionada(null)}>
           <Pressable style={styles.cardContainer} onPress={(e) => e.stopPropagation()}>
@@ -120,7 +161,7 @@ export default function HomeScreen() {
                 motivo={alertaSeleccionada.motivo}
                 userName={alertaSeleccionada.usuarioInfo.displayName}
                 hora={alertaSeleccionada.timestamp.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })}
-                ubicacionTexto={`${alertaSeleccionada.ubicacion.lat.toFixed(4)}, ${alertaSeleccionada.ubicacion.lng.toFixed(4)}`}
+                ubicacionTexto={alertaSeleccionada.direccionTexto} // ✅ Usamos la dirección real
               />
             )}
             <TouchableOpacity style={styles.closeBtn} onPress={() => setAlertaSeleccionada(null)}>
@@ -153,7 +194,6 @@ const styles = StyleSheet.create({
   loadingContainer: { flex: 1, backgroundColor: '#0F172A', justifyContent: 'center', alignItems: 'center' },
   loadingText: { color: '#94A3B8', marginTop: 15, fontSize: 16 },
   
-  // Estilos del Overlay
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'flex-end', alignItems: 'center', paddingBottom: 100 },
   cardContainer: { width: '90%', maxWidth: 320, alignItems: 'center' },
   closeBtn: { marginTop: 15, paddingVertical: 10, paddingHorizontal: 30, backgroundColor: '#1E293B', borderRadius: 20 },
