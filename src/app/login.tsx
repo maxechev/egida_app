@@ -1,4 +1,4 @@
-import imagePath from '@/constants/imagePath';
+import imagePath from '@/src/constants/imagePath';
 import { Ionicons } from '@expo/vector-icons'; // Librería nativa de Expo para íconos profesionales
 import { router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
