@@ -1,11 +1,10 @@
+import imagePath from '@/constants/imagePath';
 import { Ionicons } from '@expo/vector-icons'; // Librería nativa de Expo para íconos profesionales
 import { router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { getAuth, sendPasswordResetEmail, signInWithEmailAndPassword } from 'firebase/auth';
 import { useState } from 'react';
 import { Alert, Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
-
-const icon = require('../assets/images/logo_egida.png');
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
@@ -75,7 +74,7 @@ export default function LoginScreen() {
     <View style={styles.container}>
       <StatusBar style="light" />
       
-      <Image source={icon} style={styles.logo} resizeMode="contain" />
+      <Image source={imagePath.logoEgida} style={styles.logo} resizeMode="contain" />
       <Text style={styles.title}>Iniciar sesión</Text>
 
       <TextInput
