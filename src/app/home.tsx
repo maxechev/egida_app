@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Alert, Modal, Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import AlertaDetalleCard from '../../components/alerta-detalle-card';
+import AlertaDetalleCard from '../components/alerta-detalle-card';
 import { db } from './firebase/config';
 
 const darkMapStyle = [
