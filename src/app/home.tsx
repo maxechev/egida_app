@@ -19,27 +19,6 @@ const darkMapStyle = [
   { featureType: 'transit', stylers: [{ visibility: 'off' }] },
 ];
 
-// ✅ FUNCIÓN DE GEOCODIFICACIÓN INVERSA
-const getAddressFromCoords = async (lat: number, lng: number): Promise<string> => {
-  try {
-    const [address] = await Location.reverseGeocodeAsync({ latitude: lat, longitude: lng });
-    if (!address) return 'Ubicación desconocida';
-    
-    const calle = address.street || '';
-    const numero = address.streetNumber || '';
-    const ciudad = address.city || address.subregion || '';
-    
-    // Formato limpio: "Calle Número, Ciudad"
-    let direccion = `${calle} ${numero}`.trim();
-    if (ciudad) direccion += `, ${ciudad}`;
-    
-    return direccion || 'Coordenadas sin nombre de calle';
-  } catch (error) {
-    console.error('Error geocodificando:', error);
-    return 'Error al obtener dirección';
-  }
-};
-
 export default function HomeScreen() {
   const [region, setRegion] = useState<any>(null);
   const [alertas, setAlertas] = useState<any[]>([]);
@@ -71,13 +50,18 @@ export default function HomeScreen() {
     })();
   }, []);
 
-  // 2. Suscripción a alertas + Resolución de direcciones
+  // 2. Suscripción a alertas (Lectura directa de campos optimizados)
   useEffect(() => {
     if (!region) return;
+
+    // ✅ CORRECCIÓN: TIEMPO_LIMITE se recalcula dinámicamente
+    const TIEMPO_LIMITE = new Date(Date.now() - 30 * 60 * 1000);
+
     const q = query(
       collection(db, 'alertas_demo'),
       where('estado', '==', 'En proceso'),
       where('redId', '==', 'barrio-demo-1'),
+      where('timestamp', '>', TIEMPO_LIMITE),
       orderBy('timestamp', 'desc')
     );
     
@@ -90,26 +74,27 @@ export default function HomeScreen() {
           try {
             const userDoc = await getDoc(doc(db, 'usuarios', data.userId));
             usuariosCache.current[data.userId] = userDoc.exists() ? userDoc.data() : { displayName: 'Vecino Anónimo' };
-          } catch (e) { usuariosCache.current[data.userId] = { displayName: 'Usuario Desconocido' }; }
+          } catch (e) { 
+            usuariosCache.current[data.userId] = { displayName: 'Usuario Desconocido' }; 
+          }
         }
 
-        // Resolución de fecha
+        // Resolución de fecha segura
         let fechaAlerta = new Date();
-        if (data.timestamp && typeof data.timestamp.toDate === 'function') fechaAlerta = data.timestamp.toDate();
-        else if (typeof data.timestamp === 'string') fechaAlerta = new Date(data.timestamp);
-        
-        // ✅ NUEVO: Resolución de dirección legible
-        let direccionTexto = 'Cargando ubicación...';
-        if (data.ubicacion?.lat && data.ubicacion?.lng) {
-          direccionTexto = await getAddressFromCoords(data.ubicacion.lat, data.ubicacion.lng);
+        if (data.timestamp && typeof data.timestamp.toDate === 'function') {
+          fechaAlerta = data.timestamp.toDate();
+        } else if (typeof data.timestamp === 'string') {
+          fechaAlerta = new Date(data.timestamp);
         }
         
+        // ✅ NUEVO: Lectura directa del campo 'direccion' pre-calculado
         return { 
           id: docSnap.id, 
           ...data, 
           usuarioInfo: usuariosCache.current[data.userId], 
           timestamp: fechaAlerta,
-          direccionTexto: direccionTexto // Guardamos la dirección resuelta
+          coordenadas: data.coordenadas || { lat: 0, lng: 0 },
+          direccion: data.direccion || 'Ubicación desconocida'
         };
       }));
       
@@ -122,26 +107,44 @@ export default function HomeScreen() {
   const centerOnUser = async () => {
     try {
       const loc = await Location.getCurrentPositionAsync({});
-      mapRef.current?.animateToRegion({ ...loc.coords, latitudeDelta: 0.01, longitudeDelta: 0.01 });
+      mapRef.current?.animateToRegion({ 
+        ...loc.coords, 
+        latitudeDelta: 0.01, 
+        longitudeDelta: 0.01 
+      });
     } catch (error) { console.error(error); }
   };
 
   if (!region || loading) {
-    return <View style={styles.loadingContainer}><ActivityIndicator size="large" color="#FF4444" /><Text style={styles.loadingText}>Conectando con la red Égida...</Text></View>;
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#FF4444" />
+        <Text style={styles.loadingText}>Conectando con la red Égida...</Text>
+      </View>
+    );
   }
 
   return (
     <SafeAreaView style={styles.container}>
-      <MapView ref={mapRef} style={styles.map} region={region} showsUserLocation customMapStyle={darkMapStyle}>
+      <MapView 
+        ref={mapRef} 
+        style={styles.map} 
+        region={region} 
+        showsUserLocation 
+        customMapStyle={darkMapStyle}
+      >
         {alertas.map((alerta) => (
           <Marker
             key={alerta.id}
-            coordinate={{ latitude: alerta.ubicacion.lat, longitude: alerta.ubicacion.lng }}
+            coordinate={{ 
+              latitude: alerta.coordenadas.lat, 
+              longitude: alerta.coordenadas.lng 
+            }}
             pinColor="#FF4444"
             onPress={() => {
               mapRef.current?.animateToRegion({ 
-                latitude: alerta.ubicacion.lat, 
-                longitude: alerta.ubicacion.lng, 
+                latitude: alerta.coordenadas.lat, 
+                longitude: alerta.coordenadas.lng, 
                 latitudeDelta: 0.005, 
                 longitudeDelta: 0.005 
               });
@@ -161,7 +164,7 @@ export default function HomeScreen() {
                 motivo={alertaSeleccionada.motivo}
                 userName={alertaSeleccionada.usuarioInfo.displayName}
                 hora={alertaSeleccionada.timestamp.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })}
-                ubicacionTexto={alertaSeleccionada.direccionTexto} // ✅ Usamos la dirección real
+                ubicacionTexto={alertaSeleccionada.direccion} // ✅ Usa dirección pre-calculada
               />
             )}
             <TouchableOpacity style={styles.closeBtn} onPress={() => setAlertaSeleccionada(null)}>
@@ -172,11 +175,15 @@ export default function HomeScreen() {
       </Modal>
 
       {/* Controles Superiores */}
-      <TouchableOpacity style={styles.menuBtn} onPress={() => router.push('/opciones')}><Text style={styles.menuIcon}>☰</Text></TouchableOpacity>
-      <View style={styles.redBadge}><Text style={styles.redText}>Red actual: Barrio Demo</Text></View>
+      <TouchableOpacity style={styles.menuBtn} onPress={() => router.push('/opciones')}>
+        <Text style={styles.menuIcon}>☰</Text>
+      </TouchableOpacity>
+      <View style={styles.redBadge}>
+        <Text style={styles.redText}>Red actual: Barrio Demo</Text>
+      </View>
       <View style={styles.rightControls}>
         <TouchableOpacity><Text style={styles.controlIcon}>🌐</Text></TouchableOpacity>
-        <TouchableOpacity><Text style={styles.controlIcon}>⌕</Text></TouchableOpacity>
+        <TouchableOpacity><Text style={styles.controlIcon}></Text></TouchableOpacity>
         <TouchableOpacity onPress={centerOnUser}><Text style={styles.controlIcon}>◎</Text></TouchableOpacity>
       </View>
 

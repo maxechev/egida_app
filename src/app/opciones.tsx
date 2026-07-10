@@ -1,14 +1,14 @@
+import { router } from 'expo-router';
+import { signOut } from 'firebase/auth';
+import { useState } from 'react';
 import {
-  View,
+  Modal,
   Text,
   TouchableOpacity,
-  Modal,
+  View,
 } from 'react-native';
-import { router } from 'expo-router';
-import { useState } from 'react';
-import { signOut } from 'firebase/auth';
-import { auth } from './firebase/config';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { auth } from './firebase/config';
 
 export default function OpcionesScreen() {
   const [mostrarModal, setMostrarModal] = useState(false);
@@ -16,9 +16,7 @@ export default function OpcionesScreen() {
   const cerrarSesion = async () => {
     try {
       await signOut(auth);
-
       setMostrarModal(false);
-
       router.replace('/login');
     } catch (error) {
       alert('Error al cerrar sesión');
@@ -34,16 +32,10 @@ export default function OpcionesScreen() {
       }}
     >
       <TouchableOpacity
-        style={{
-          position: 'absolute',
-          left: 20,
-          top: 50,
-        }}
+        style={{ position: 'absolute', left: 20, top: 50 }}
         onPress={() => router.back()}
       >
-        <Text style={{ color: 'white', fontSize: 30 }}>
-          ←
-        </Text>
+        <Text style={{ color: 'white', fontSize: 30 }}>←</Text>
       </TouchableOpacity>
 
       <Text
@@ -71,67 +63,44 @@ export default function OpcionesScreen() {
         }}
         onPress={() => router.push('/perfil')}
       >
-        <Text style={{ fontSize: 35 }}>
-          👤
-        </Text>
+        <Text style={{ fontSize: 35 }}>👤</Text>
       </TouchableOpacity>
 
-      <View
-        style={{
-          marginTop: 190,
-          gap: 25,
-        }}
-      >
+      <View style={{ marginTop: 190, gap: 25 }}>
         <TouchableOpacity
           style={styles.button}
           onPress={() => router.push('/alertaopc')}
         >
-          <Text style={styles.text}>
-            Alertas
-          </Text>
+          <Text style={styles.text}>Alertas</Text>
+        </TouchableOpacity>
+
+        {/* ✅ CORRECCIÓN: Agregado onPress para navegar al historial */}
+        <TouchableOpacity
+          style={styles.button}
+          onPress={() => router.push('/historial_alertas')}
+        >
+          <Text style={styles.text}>Historial</Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.button}>
-          <Text style={styles.text}>
-            Historial
-          </Text>
+          <Text style={styles.text}>Comunidad</Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.button}>
-          <Text style={styles.text}>
-            Comunidad
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.button}>
-          <Text style={styles.text}>
-            Chat de la red
-          </Text>
+          <Text style={styles.text}>Chat de la red</Text>
         </TouchableOpacity>
       </View>
 
       <TouchableOpacity
-        style={{
-          position: 'absolute',
-          bottom: 80,
-        }}
+        style={{ position: 'absolute', bottom: 80 }}
         onPress={() => setMostrarModal(true)}
       >
-        <Text
-          style={{
-            color: 'red',
-            fontWeight: 'bold',
-          }}
-        >
+        <Text style={{ color: 'red', fontWeight: 'bold' }}>
           Cerrar sesión
         </Text>
       </TouchableOpacity>
 
-      <Modal
-        visible={mostrarModal}
-        transparent
-        animationType="fade"
-      >
+      <Modal visible={mostrarModal} transparent animationType="fade">
         <View
           style={{
             flex: 1,
@@ -166,9 +135,7 @@ export default function OpcionesScreen() {
                 marginBottom: 25,
               }}
             >
-              Al cerrar sesión deberá volver a
-              iniciar sesión para acceder a su
-              cuenta. ¿Desea continuar?
+              Al cerrar sesión deberá volver a iniciar sesión para acceder a su cuenta. ¿Desea continuar?
             </Text>
 
             <View
@@ -178,32 +145,12 @@ export default function OpcionesScreen() {
                 gap: 15,
               }}
             >
-              <TouchableOpacity
-                onPress={() =>
-                  setMostrarModal(false)
-                }
-              >
-                <Text
-                  style={{
-                    backgroundColor: 'white',
-                    padding: 8,
-                  }}
-                >
-                  Cancelar
-                </Text>
+              <TouchableOpacity onPress={() => setMostrarModal(false)}>
+                <Text style={{ backgroundColor: 'white', padding: 8 }}>Cancelar</Text>
               </TouchableOpacity>
 
-              <TouchableOpacity
-                onPress={cerrarSesion}
-              >
-                <Text
-                  style={{
-                    backgroundColor: 'white',
-                    padding: 8,
-                  }}
-                >
-                  Aceptar
-                </Text>
+              <TouchableOpacity onPress={cerrarSesion}>
+                <Text style={{ backgroundColor: 'white', padding: 8 }}>Aceptar</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -221,7 +168,6 @@ const styles = {
     justifyContent: 'center' as const,
     alignItems: 'center' as const,
   },
-
   text: {
     fontWeight: 'bold' as const,
     color: '#10172B',

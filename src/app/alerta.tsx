@@ -5,7 +5,7 @@ import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { useState } from 'react';
 import { ActivityIndicator, Alert, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { auth, db } from './firebase/config'; // Asegúrate de importar db y auth
+import { auth, db } from './firebase/config';
 
 export default function AlertaScreen() {
   const [motivo, setMotivo] = useState('');
@@ -20,11 +20,10 @@ export default function AlertaScreen() {
     setIsLoading(true);
 
     try {
-      // 1. Validar autenticación
       const user = auth.currentUser;
       if (!user) throw new Error('Debes iniciar sesión para enviar una alerta.');
 
-      // 2. Obtener geolocalización precisa (Crítico para el mapa)
+      // 1. Obtener geolocalización precisa
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') throw new Error('Permiso de ubicación requerido.');
 
@@ -32,26 +31,39 @@ export default function AlertaScreen() {
         accuracy: Location.Accuracy.High,
       });
 
-      // 3. Guardar en Firestore (Estructura acordada)
+      // ✅ NUEVO: Calcular dirección legible inmediatamente
+      const [address] = await Location.reverseGeocodeAsync({
+        latitude: location.coords.latitude,
+        longitude: location.coords.longitude,
+      });
+
+      const direccionTexto = address
+        ? `${address.street || ''} ${address.streetNumber || ''}, ${address.city || address.subregion || ''}`.trim()
+        : 'Ubicación desconocida';
+
+      // 2. Guardar con nueva estructura optimizada
       await addDoc(collection(db, 'alertas_demo'), {
-        userId: user.uid,       // Referencia a /usuarios/{uid}
+        userId: user.uid,
         motivo: motivo,
-        ubicacion: {
+        estado: 'En proceso',
+        redId: 'barrio-demo-1',
+        timestamp: serverTimestamp(),
+        
+        // ✅ Campos separados para optimización futura
+        coordenadas: {
           lat: location.coords.latitude,
           lng: location.coords.longitude,
         },
-        timestamp: serverTimestamp(),
-        estado: 'En proceso',
-        redId: 'barrio-demo-1', // Debe coincidir con home.tsx
+        direccion: direccionTexto,
       });
 
-      console.log(`✅ Alerta enviada: ${motivo}`);
-      router.replace('/home'); // Ir al mapa tras éxito
+      console.log(`✅ Alerta enviada: ${motivo} | 📍 ${direccionTexto}`);
+      router.replace('/home');
 
     } catch (error: any) {
-      console.error(' Error:', error.code, error.message);
+      console.error('❌ Error:', error.code, error.message);
       Alert.alert('Error', error.message || 'No se pudo enviar la alerta.');
-      setIsLoading(false); // Solo liberar si hay error
+      setIsLoading(false);
     }
   };
 
