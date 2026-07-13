@@ -13,7 +13,7 @@ import {
     View,
 } from "react-native";
 
-const API_URL = "http://192.168.1.10:5285/api";
+const API_URL = "http://${API_URL}:5285/api";
 
 // Configurar cómo se muestran las notificaciones
 Notifications.setNotificationHandler({

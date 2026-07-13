@@ -1,24 +1,24 @@
 import imagePath from "@/src/constants/imagePath";
-import { Ionicons } from "@expo/vector-icons"; // Librería nativa de Expo para íconos profesionales
+import { API_URL } from "@/src/constants/urlApi";
+import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import { StatusBar } from "expo-status-bar";
 import { useState } from "react";
 import {
-    Alert,
-    Image,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  Alert,
+  Image,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
+
 export default function LoginScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-
-  // Nuevo estado para controlar la visibilidad de la contraseña
   const [showPassword, setShowPassword] = useState(false);
 
   const handleForgotPassword = () => {
@@ -35,60 +35,43 @@ export default function LoginScreen() {
 
     try {
       console.log("1. Iniciando login");
-      console.log("2. Enviando petición a la API");
-      console.log("3. Respuesta recibida");
+      console.log("2. Enviando petición a:", `${API_URL}/Auth/login`); // ✅ Para ver a dónde apunta
 
-      try {
-        const response = await fetch(
-          "http://192.168.1.10:5285/api/Auth/login",
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              correo: email,
-              contrasena: password,
-            }),
-          },
-        );
+      const response = await fetch(`${API_URL}/Auth/login`, {
+        // ✅ 2. Usamos la variable
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          correo: email,
+          contrasena: password,
+        }),
+      });
 
-        const data = await response.json();
+      const data = await response.json();
+      console.log("STATUS:", response.status);
+      console.log("BODY:", data);
 
-        console.log("STATUS:", response.status);
-        console.log("BODY:", data);
-
-        if (!response.ok) {
-          Alert.alert("Error", data.mensaje);
-          return;
-        }
-
-        console.log("TOKEN:", data.token);
-
-        await SecureStore.setItemAsync("token", data.token);
-
-        router.replace("/home");
-      } catch (e: any) {
-        console.log("FETCH ERROR:", e);
-        console.log("MESSAGE:", e.message);
-        throw e;
+      if (!response.ok) {
+        Alert.alert("Error", data.mensaje || "Error al iniciar sesión");
+        return;
       }
+
+      console.log("TOKEN:", data.token);
+      await SecureStore.setItemAsync("token", data.token);
+      await SecureStore.setItemAsync(
+        "redActivaId",
+        data.redId?.toString() || "1",
+      ); // Por si las dudas
+
+      router.replace("/home");
     } catch (error: any) {
-      console.log("ERROR:", error);
-      console.log("ERROR RESPONSE:", error.response?.data);
-
-      let msg = "Ocurrió un error al iniciar sesión.";
-
-      switch (error.code) {
-        case "auth/invalid-credential":
-          msg = "Correo o contraseña incorrectos.";
-          break;
-        case "auth/network-request-failed":
-          msg = "Sin conexión a Internet.";
-          break;
-      }
-
-      Alert.alert("Error", msg);
+      console.log("FETCH ERROR:", error);
+      Alert.alert(
+        "Error",
+        "No se pudo conectar con el servidor. Verificá tu red Wi-Fi.",
+      );
     } finally {
       setIsLoading(false);
     }
@@ -97,7 +80,6 @@ export default function LoginScreen() {
   return (
     <View style={styles.container}>
       <StatusBar style="light" />
-
       <Image
         source={imagePath.logoEgida}
         style={styles.logo}
@@ -111,22 +93,20 @@ export default function LoginScreen() {
         value={email}
         onChangeText={setEmail}
         keyboardType="email-address"
-        autoCapitalize="none" // Evita que el teclado sugiera mayúsculas al inicio del email
+        autoCapitalize="none"
         style={styles.input}
       />
 
-      {/* Contenedor relativo para posicionar el ojito dentro del input */}
       <View style={styles.passwordContainer}>
         <TextInput
           placeholder="Contraseña"
           placeholderTextColor="#888"
-          secureTextEntry={!showPassword} // Alterna entre oculto y visible
+          secureTextEntry={!showPassword}
           value={password}
           onChangeText={setPassword}
-          autoCapitalize="none" // CRÍTICO: Evita que iOS/Android pongan mayúscula automática al primer caracter
+          autoCapitalize="none"
           style={[styles.input, styles.passwordInput]}
         />
-
         <TouchableOpacity
           onPress={() => setShowPassword(!showPassword)}
           style={styles.eyeButton}
@@ -197,17 +177,13 @@ const styles = StyleSheet.create({
     color: "#000",
     fontSize: 15,
   },
-  // Estilos nuevos para el campo de contraseña con ojito
   passwordContainer: {
     position: "relative",
     width: "100%",
     maxWidth: 320,
     marginBottom: 15,
   },
-  passwordInput: {
-    marginBottom: 0, // Quitamos el margin bottom porque el contenedor lo maneja
-    paddingRight: 50, // Espacio interno para que el texto no se superponga con el ojo
-  },
+  passwordInput: { marginBottom: 0, paddingRight: 50 },
   eyeButton: {
     position: "absolute",
     right: 12,

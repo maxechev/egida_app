@@ -1,3 +1,4 @@
+import { API_URL } from "@/src/constants/urlApi";
 import { Picker } from "@react-native-picker/picker";
 import * as Location from "expo-location";
 import { router } from "expo-router";
@@ -25,8 +26,9 @@ export default function AlertaScreen() {
     setIsLoading(true);
 
     try {
-      // 1. Obtener token
+      // 1. Obtener token y red activa
       const token = await SecureStore.getItemAsync("token");
+      const redActivaStr = await SecureStore.getItemAsync("redActivaId");
       if (!token) throw new Error("No hay sesión activa.");
 
       // 2. Decodificar token para obtener userId
@@ -56,8 +58,7 @@ export default function AlertaScreen() {
         ? `${address.street || ""} ${address.streetNumber || ""}, ${address.city || address.subregion || ""}`.trim()
         : "Ubicación desconocida";
 
-      // 5. Enviar a la API
-      const response = await fetch("http://192.168.1.10:5285/api/Alerta", {
+      const response = await fetch(`${API_URL}/Alerta`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -65,14 +66,14 @@ export default function AlertaScreen() {
         },
         body: JSON.stringify({
           tipo: motivo,
-          mensaje: motivo, // Usamos el mismo motivo como mensaje
+          mensaje: motivo,
           ubicacion: direccionTexto,
           fecha: new Date().toISOString(),
           latitud: location.coords.latitude,
           longitud: location.coords.longitude,
           usuarioId: userId,
           estado: "En proceso",
-          redId: 1, // ID de la red (ajustar si es diferente)
+          redId: redActivaStr ? parseInt(redActivaStr) : 1,
         }),
       });
 

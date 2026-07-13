@@ -3,12 +3,12 @@ import * as SecureStore from "expo-secure-store";
 import { StatusBar } from "expo-status-bar";
 import { useEffect, useState } from "react";
 import {
-    ActivityIndicator,
-    Alert,
-    Image,
-    Text,
-    TextInput,
-    TouchableOpacity,
+  ActivityIndicator,
+  Alert,
+  Image,
+  Text,
+  TextInput,
+  TouchableOpacity,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import images from "../constants/imagePath";
@@ -45,7 +45,7 @@ export default function VerifyEmailScreen() {
     setIsLoading(true);
     try {
       const response = await fetch(
-        "http://192.168.1.10:5285/api/Auth/verificar-email",
+        "http://${API_URL}:5285/api/Auth/verificar-email",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
