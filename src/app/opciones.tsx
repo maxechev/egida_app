@@ -1,20 +1,23 @@
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import { signOut } from "firebase/auth";
+import * as SecureStore from "expo-secure-store";
 import { useState } from "react";
 import { Modal, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { auth } from "../lib/firebase/config";
 
 export default function OpcionesScreen() {
   const [mostrarModal, setMostrarModal] = useState(false);
 
   const cerrarSesion = async () => {
     try {
-      await signOut(auth);
+      await SecureStore.deleteItemAsync("token");
+      await SecureStore.deleteItemAsync("redActivaId");
+
       setMostrarModal(false);
+
       router.replace("/login");
     } catch (error) {
+      console.error("Error al cerrar sesión:", error);
       alert("Error al cerrar sesión");
     }
   };

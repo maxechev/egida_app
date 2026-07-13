@@ -1,24 +1,35 @@
-import { Redirect } from 'expo-router';
-import { onAuthStateChanged } from 'firebase/auth';
-import { useEffect, useState } from 'react';
-import { auth } from '../lib/firebase/config';
+import { Redirect } from "expo-router";
+import * as SecureStore from "expo-secure-store";
+import { useEffect, useState } from "react";
 
 export default function Index() {
-  const [user, setUser] = useState<any>(undefined);
+  const [isChecking, setIsChecking] = useState(true);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (usuario) => {
-      setUser(usuario);
-    });
+    const checkAuth = async () => {
+      try {
+        // Verificamos si existe un token guardado
+        const token = await SecureStore.getItemAsync("token");
+        setIsLoggedIn(!!token);
+      } catch (error) {
+        console.error("Error verificando sesión:", error);
+        setIsLoggedIn(false);
+      } finally {
+        setIsChecking(false);
+      }
+    };
 
-    return unsubscribe;
+    checkAuth();
   }, []);
 
-  if (user === undefined) {
-    return null; // o una pantalla de carga
+  // Mientras verifica, no mostramos nada (o podrías poner un ActivityIndicator)
+  if (isChecking) {
+    return null;
   }
 
-  if (user) {
+  // Si hay token, va al home. Si no, va al login.
+  if (isLoggedIn) {
     return <Redirect href="/home" />;
   }
 

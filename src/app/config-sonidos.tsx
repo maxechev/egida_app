@@ -4,12 +4,12 @@ import { router } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import { useEffect, useState } from "react";
 import {
-  ActivityIndicator,
-  SafeAreaView,
-  Switch,
-  Text,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    SafeAreaView,
+    Switch,
+    Text,
+    TouchableOpacity,
+    View,
 } from "react-native";
 
 const API_URL = "http://192.168.1.10:5285/api";
