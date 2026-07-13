@@ -1,23 +1,60 @@
-import {
-  View,
-  Text,
-  TouchableOpacity,
-} from 'react-native';
-import { router } from 'expo-router';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { router } from "expo-router";
+import * as SecureStore from "expo-secure-store";
+import { useEffect, useState } from "react";
+import { Text, TouchableOpacity, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function PerfilScreen() {
+  const [datos, setDatos] = useState({
+    nombre: "",
+    apellido: "",
+    correo: "",
+    contacto: "",
+    alias: "",
+  });
+  useEffect(() => {
+    cargarPerfil();
+  }, []);
+
+  const cargarPerfil = async () => {
+    try {
+      const token = await SecureStore.getItemAsync("token");
+      if (!token) return;
+
+      const response = await fetch(
+        "http://192.168.1.10:5285/api/Perfil/mi-perfil",
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        setDatos({
+          nombre: data.nombre,
+          apellido: data.apellido,
+          correo: data.correo,
+          contacto: data.contacto,
+          alias: data.alias,
+        });
+      }
+    } catch (error) {
+      console.error("Error al cargar perfil:", error);
+    }
+  };
   return (
     <SafeAreaView
       style={{
         flex: 1,
-        backgroundColor: '#10172B',
-        alignItems: 'center',
+        backgroundColor: "#10172B",
+        alignItems: "center",
       }}
     >
       <TouchableOpacity
         style={{
-          position: 'absolute',
+          position: "absolute",
           left: 20,
           top: 50,
         }}
@@ -25,7 +62,7 @@ export default function PerfilScreen() {
       >
         <Text
           style={{
-            color: 'white',
+            color: "white",
             fontSize: 30,
           }}
         >
@@ -39,14 +76,12 @@ export default function PerfilScreen() {
           width: 120,
           height: 120,
           borderRadius: 60,
-          backgroundColor: '#F0F0F2',
-          justifyContent: 'center',
-          alignItems: 'center',
+          backgroundColor: "#F0F0F2",
+          justifyContent: "center",
+          alignItems: "center",
         }}
       >
-        <Text style={{ fontSize: 70 }}>
-          👤
-        </Text>
+        <Text style={{ fontSize: 70 }}>👤</Text>
       </View>
 
       <View
@@ -56,36 +91,36 @@ export default function PerfilScreen() {
         }}
       >
         <View style={styles.box}>
-          <Text>José Matías</Text>
+          <Text>{datos.nombre}</Text>
         </View>
 
         <View style={styles.box}>
-          <Text>Martínez</Text>
+          <Text>{datos.apellido}</Text>
         </View>
 
         <View style={styles.box}>
-          <Text>josemarti@gmail.com</Text>
+          <Text>{datos.correo}</Text>
         </View>
 
         <View style={styles.box}>
-          <Text>362-5472263</Text>
+          <Text>{datos.contacto}</Text>
         </View>
 
         <View style={styles.box}>
-          <Text>José</Text>
+          <Text>{datos.alias}</Text>
         </View>
 
         <TouchableOpacity
           style={{
             ...styles.box,
-            justifyContent: 'center',
-            alignItems: 'center',
+            justifyContent: "center",
+            alignItems: "center",
           }}
-          onPress={() => router.push('/privacidad')}
+          onPress={() => router.push("/privacidad")}
         >
           <Text
             style={{
-              fontWeight: 'bold',
+              fontWeight: "bold",
             }}
           >
             Privacidad
@@ -98,10 +133,10 @@ export default function PerfilScreen() {
 
 const styles = {
   box: {
-    backgroundColor: '#F0F0F2',
+    backgroundColor: "#F0F0F2",
     width: 180,
     height: 35,
-    justifyContent: 'center' as const,
+    justifyContent: "center" as const,
     paddingHorizontal: 10,
   },
 };
