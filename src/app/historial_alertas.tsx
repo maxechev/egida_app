@@ -1,13 +1,5 @@
 import { router } from "expo-router";
-import {
-  collection,
-  doc,
-  getDoc,
-  onSnapshot,
-  orderBy,
-  query,
-  where,
-} from "firebase/firestore"; // ✅ Agregado getDoc y doc
+import * as SecureStore from "expo-secure-store";
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
@@ -17,8 +9,8 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-//HAY QUE ACTUALIZARLO POR LA BASE DE DATOS EN .NET NUEVA
-import { db } from "./firebase/config";
+
+const API_URL = "http://192.168.1.10:5285/api";
 
 interface AlertaHistorial {
   id: string;
@@ -26,7 +18,7 @@ interface AlertaHistorial {
   direccion: string;
   timestamp: Date;
   estado: string;
-  userName: string; // ✅ Nuevo campo para mostrar nombre real
+  userName: string;
 }
 
 export default function HistorialAlertasScreen() {
@@ -37,28 +29,50 @@ export default function HistorialAlertasScreen() {
   );
 
   useEffect(() => {
-    let q = query(collection(db, "alertas_demo"), orderBy("timestamp", "desc"));
+    cargarAlertas();
+  }, [filtro]);
 
-    if (filtro !== "Todas") {
-      q = query(
-        collection(db, "alertas_demo"),
-        where("estado", "==", filtro),
-        orderBy("timestamp", "desc"),
-      );
-    }
+  const cargarAlertas = async () => {
+    setLoading(true);
+    try {
+      const token = await SecureStore.getItemAsync("token");
+      if (!token) return;
 
-    const unsubscribe = onSnapshot(q, async (snapshot) => {
-      // ✅ Procesamos en paralelo para resolver usuarios sin bloquear UI
-      const promesas = snapshot.docs.map(async (docSnap) => {
-        const data = docSnap.data();
+      // Construir URL con filtro si es necesario
+      let url = `${API_URL}/Alerta`;
+      if (filtro !== "Todas") {
+        url += `?estado=${encodeURIComponent(filtro)}`;
+      }
 
-        // Resolver nombre de usuario desde /usuarios/{userId}
+      const response = await fetch(url, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        console.error("Error al cargar alertas:", response.status);
+        return;
+      }
+
+      const data = await response.json();
+
+      // Resolver nombres de usuarios en paralelo
+      const promesas = data.map(async (alerta: any) => {
         let userName = "Usuario Anónimo";
-        if (data.userId) {
+        if (alerta.usuarioId) {
           try {
-            const userDoc = await getDoc(doc(db, "usuarios", data.userId));
-            if (userDoc.exists()) {
-              userName = userDoc.data().displayName || "Vecino Sin Nombre";
+            const userResponse = await fetch(
+              `${API_URL}/Usuario/${alerta.usuarioId}`,
+              {
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                },
+              },
+            );
+            if (userResponse.ok) {
+              const userData = await userResponse.json();
+              userName = `${userData.nombre} ${userData.apellido}`;
             }
           } catch (e) {
             console.error("Error resolviendo usuario:", e);
@@ -66,22 +80,23 @@ export default function HistorialAlertasScreen() {
         }
 
         return {
-          id: docSnap.id,
-          ...data,
-          timestamp: data.timestamp?.toDate() || new Date(),
-          direccion: data.direccion || "Dirección no disponible",
-          estado: data.estado || "Desconocido",
-          userName: userName, // ✅ Asignamos nombre resuelto
+          id: alerta.id.toString(),
+          motivo: alerta.tipo,
+          direccion: alerta.ubicacion || "Dirección no disponible",
+          timestamp: new Date(alerta.fecha),
+          estado: alerta.estado || "Desconocido",
+          userName: userName,
         } as AlertaHistorial;
       });
 
       const lista = await Promise.all(promesas);
       setAlertas(lista);
+    } catch (error) {
+      console.error("Error al cargar historial:", error);
+    } finally {
       setLoading(false);
-    });
-
-    return () => unsubscribe();
-  }, [filtro]);
+    }
+  };
 
   const renderItem = ({ item }: { item: AlertaHistorial }) => (
     <TouchableOpacity
@@ -110,7 +125,6 @@ export default function HistorialAlertasScreen() {
         <Text style={styles.ubicacion} numberOfLines={1}>
           {item.direccion}
         </Text>
-        {/* ✅ Mostramos el nombre real del usuario */}
         <Text
           style={[
             styles.motivo,

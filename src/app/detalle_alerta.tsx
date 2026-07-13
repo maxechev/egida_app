@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
-import { doc, getDoc } from "firebase/firestore";
+import * as SecureStore from "expo-secure-store";
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
@@ -10,8 +10,8 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-// HAY QUE ACTUALIZARLO POR LA BASE DE DATOS EN .NET NUEVA
-import { db } from "./firebase/config";
+
+const API_URL = "http://192.168.1.10:5285/api";
 
 export default function DetalleAlertaScreen() {
   const { id } = useLocalSearchParams();
@@ -22,22 +22,51 @@ export default function DetalleAlertaScreen() {
     const fetchDetalle = async () => {
       if (!id) return;
       try {
-        const docRef = doc(db, "alertas_demo", id as string);
-        const docSnap = await getDoc(docRef);
+        const token = await SecureStore.getItemAsync("token");
+        if (!token) return;
 
-        if (docSnap.exists()) {
-          const data = docSnap.data();
-          // ✅ CORRECCIÓN: Mapeo correcto a la nueva estructura de datos
-          setAlerta({
-            id: docSnap.id,
-            ...data,
-            timestamp: data.timestamp?.toDate() || new Date(),
-            // Leer displayName directamente del documento o fallback seguro
-            userName: data.usuarioInfo?.displayName || "Usuario Anónimo",
-            // Leer dirección pre-calculada almacenada en DB
-            direccion: data.direccion || "Ubicación desconocida",
-          });
+        // 1. Obtener la alerta
+        const response = await fetch(`${API_URL}/Alerta/${id}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (!response.ok) {
+          console.error("Error al cargar alerta:", response.status);
+          return;
         }
+
+        const data = await response.json();
+
+        // 2. Resolver nombre del usuario
+        let userName = "Usuario Anónimo";
+        try {
+          const userResponse = await fetch(
+            `${API_URL}/Usuario/${data.usuarioId}`,
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            },
+          );
+          if (userResponse.ok) {
+            const userData = await userResponse.json();
+            userName = `${userData.nombre} ${userData.apellido}`;
+          }
+        } catch (e) {
+          console.error("Error al cargar usuario:", e);
+        }
+
+        // 3. Mapear a la estructura esperada por la UI
+        setAlerta({
+          id: data.id,
+          motivo: data.tipo,
+          direccion: data.ubicacion || "Ubicación desconocida",
+          timestamp: new Date(data.fecha),
+          userName: userName,
+          estado: data.estado,
+        });
       } catch (e) {
         console.error("Error al cargar detalle:", e);
       } finally {
@@ -92,7 +121,7 @@ export default function DetalleAlertaScreen() {
           </View>
         </View>
 
-        {/* ✅ Ubicación: Usa campo 'direccion' pre-calculado */}
+        {/* Ubicación */}
         <View style={styles.row}>
           <View style={styles.iconBox}>
             <Ionicons name="location-outline" size={20} color="#94A3B8" />
