@@ -15,8 +15,7 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-
-const icon = require("../assets/images/logo_egida.png");
+import images from "../constants/imagePath";
 
 export default function RegisterScreen() {
   const [email, setEmail] = useState("");

@@ -10,6 +10,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+// HAY QUE ACTUALIZARLO POR LA BASE DE DATOS EN .NET NUEVA
 import { db } from "./firebase/config";
 
 export default function DetalleAlertaScreen() {

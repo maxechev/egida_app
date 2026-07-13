@@ -17,6 +17,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+//HAY QUE ACTUALIZARLO POR LA BASE DE DATOS EN .NET NUEVA
 import { db } from "./firebase/config";
 
 interface AlertaHistorial {
@@ -50,19 +51,6 @@ export default function HistorialAlertasScreen() {
       // ✅ Procesamos en paralelo para resolver usuarios sin bloquear UI
       const promesas = snapshot.docs.map(async (docSnap) => {
         const data = docSnap.data();
-<<<<<<< HEAD
-        
-        // Resolver nombre de usuario desde /usuarios/{userId}
-        let userName = 'Usuario Anónimo';
-        if (data.userId) {
-          try {
-            const userDoc = await getDoc(doc(db, 'usuarios', data.userId));
-            if (userDoc.exists()) {
-              userName = userDoc.data().displayName || 'Vecino Sin Nombre';
-            }
-          } catch (e) { 
-            console.error('Error resolviendo usuario:', e); 
-=======
 
         // Resolver nombre de usuario desde /usuarios/{userId}
         let userName = "Usuario Anónimo";
@@ -74,7 +62,6 @@ export default function HistorialAlertasScreen() {
             }
           } catch (e) {
             console.error("Error resolviendo usuario:", e);
->>>>>>> 7ca80f416de78646dec7cf66b0f29ce8b1f86e02
           }
         }
 
@@ -82,15 +69,9 @@ export default function HistorialAlertasScreen() {
           id: docSnap.id,
           ...data,
           timestamp: data.timestamp?.toDate() || new Date(),
-<<<<<<< HEAD
-          direccion: data.direccion || 'Dirección no disponible',
-          estado: data.estado || 'Desconocido',
-          userName: userName // ✅ Asignamos nombre resuelto
-=======
           direccion: data.direccion || "Dirección no disponible",
           estado: data.estado || "Desconocido",
           userName: userName, // ✅ Asignamos nombre resuelto
->>>>>>> 7ca80f416de78646dec7cf66b0f29ce8b1f86e02
         } as AlertaHistorial;
       });
 

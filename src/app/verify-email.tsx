@@ -11,8 +11,7 @@ import {
   TouchableOpacity
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-
-const icon = require("../assets/images/logo_egida.png");
+import images from "../constants/imagePath";
 
 export default function VerifyEmailScreen() {
   const [token, setToken] = useState("");
@@ -94,18 +93,7 @@ export default function VerifyEmailScreen() {
         <Text style={{ color: "white", fontSize: 30 }}>←</Text>
       </TouchableOpacity>
 
-<<<<<<< HEAD
-      <Image
-        source={images.logoEgida}
-        style={{
-          width: 180,
-          height: 180,
-          marginTop: 40,
-        }}
-      />
-=======
-      <Image source={icon} style={{ width: 180, height: 180, marginTop: 40 }} />
->>>>>>> 7ca80f416de78646dec7cf66b0f29ce8b1f86e02
+      <Image source={images.logoEgida} style={{ width: 180, height: 180, marginTop: 40 }} />
 
       <Text
         style={{
