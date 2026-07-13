@@ -16,8 +16,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import images from "../constants/imagePath";
-
-const API_URL = "http://192.168.1.10:5285/api";
+import { API_URL } from '../constants/urlApi';
 
 export default function RegisterScreen() {
   const [email, setEmail] = useState("");

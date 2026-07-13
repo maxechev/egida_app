@@ -9,8 +9,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-
-const API_URL = "http://192.168.1.10:5285/api";
+import { API_URL } from '../constants/urlApi';
 
 interface AlertaHistorial {
   id: string;

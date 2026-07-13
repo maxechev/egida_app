@@ -11,6 +11,7 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+
 export default function AlertaScreen() {
   const [motivo, setMotivo] = useState("");
   const [isLoading, setIsLoading] = useState(false);

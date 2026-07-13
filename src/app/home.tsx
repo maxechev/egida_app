@@ -15,8 +15,7 @@ import {
 import MapView, { Marker } from "react-native-maps";
 import { SafeAreaView } from "react-native-safe-area-context";
 import AlertaDetalleCard from "../components/alerta-detalle-card";
-
-const API_URL = "http://192.168.1.10:5285/api";
+import { API_URL } from '../constants/urlApi';
 
 const darkMapStyle = [
   { elementType: "geometry", stylers: [{ color: "#0F172A" }] },
