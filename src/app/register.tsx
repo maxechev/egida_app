@@ -17,6 +17,8 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import images from "../constants/imagePath";
 
+const API_URL = "http://192.168.1.10:5285/api";
+
 export default function RegisterScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -26,10 +28,12 @@ export default function RegisterScreen() {
   const [telefono, setTelefono] = useState("");
   const [dni, setDni] = useState("");
   const [ocupacion, setOcupacion] = useState("");
+  const [claveRed, setClaveRed] = useState("");
+  const [alias, setAlias] = useState("");
 
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
-  const [isLoading, setIsLoading] = useState(false); // Nuevo estado para evitar doble registro
+  const [isLoading, setIsLoading] = useState(false);
 
   const formatDate = (date: Date) => {
     return date.toLocaleDateString("es-AR", {
@@ -48,7 +52,16 @@ export default function RegisterScreen() {
   };
 
   const register = async () => {
-    if (!nombre || !apellido || !telefono || !email || !password) {
+    // Validaciones
+    if (
+      !nombre ||
+      !apellido ||
+      !telefono ||
+      !email ||
+      !password ||
+      !alias ||
+      !claveRed
+    ) {
       Alert.alert("Error", "Complete todos los campos obligatorios.");
       return;
     }
@@ -70,31 +83,33 @@ export default function RegisterScreen() {
 
     setIsLoading(true);
     try {
-      const response = await fetch(
-        "http://192.168.1.10:5285/api/Auth/register",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            nombre,
-            apellido,
-            correo: email,
-            contacto: telefono,
-            contrasena: password,
-            dni: dni || null,
-            ocupacion: ocupacion || null,
-            fechaNacimiento: selectedDate
-              ? selectedDate.toISOString().split("T")[0]
-              : null,
-          }),
-        },
-      );
+      const response = await fetch(`${API_URL}/Auth/register`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          nombre: nombre,
+          apellido: apellido,
+          correo: email,
+          contacto: telefono,
+          contrasena: password,
+          dni: dni || null,
+          ocupacion: ocupacion || null,
+          fechaNacimiento: selectedDate
+            ? selectedDate.toISOString().split("T")[0]
+            : null,
+          alias: alias,
+          claveRed: claveRed,
+        }),
+      });
 
       const data = await response.json();
-
       if (!response.ok) {
         Alert.alert("Error", data.mensaje || "Error al registrarse");
         return;
+      }
+      // Guardar la red a la que se unió como red activa
+      if (data.redId) {
+        await SecureStore.setItemAsync("redActivaId", data.redId.toString());
       }
 
       // Guardar correo para la siguiente pantalla
@@ -105,6 +120,8 @@ export default function RegisterScreen() {
     } catch (error: any) {
       console.error("Error en registro:", error);
       Alert.alert("Error", "Ocurrió un error al registrarse.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -115,7 +132,11 @@ export default function RegisterScreen() {
         <Text style={styles.backArrow}>←</Text>
       </TouchableOpacity>
 
-      <Image source={images.logoEgida} style={styles.logo} resizeMode="contain" />
+      <Image
+        source={images.logoEgida}
+        style={styles.logo}
+        resizeMode="contain"
+      />
       <Text style={styles.title}>Registrarse</Text>
 
       <TextInput
@@ -197,6 +218,25 @@ export default function RegisterScreen() {
           onChangeText={setOcupacion}
           style={styles.halfInput}
           editable={!isLoading}
+        />
+      </View>
+
+      <View style={styles.row}>
+        <TextInput
+          placeholder="Alias"
+          value={alias}
+          onChangeText={setAlias}
+          style={styles.halfInput}
+          editable={!isLoading}
+          autoCapitalize="none"
+        />
+        <TextInput
+          placeholder="Clave de red"
+          value={claveRed}
+          onChangeText={setClaveRed}
+          style={styles.halfInput}
+          editable={!isLoading}
+          autoCapitalize="none"
         />
       </View>
 

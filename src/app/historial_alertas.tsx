@@ -36,12 +36,14 @@ export default function HistorialAlertasScreen() {
     setLoading(true);
     try {
       const token = await SecureStore.getItemAsync("token");
-      if (!token) return;
+      const redActiva = await SecureStore.getItemAsync("redActivaId");
 
-      // Construir URL con filtro si es necesario
-      let url = `${API_URL}/Alerta`;
+      if (!token || !redActiva) return;
+
+      // Construir URL con filtro de red y estado
+      let url = `${API_URL}/Alerta?redId=${redActiva}`;
       if (filtro !== "Todas") {
-        url += `?estado=${encodeURIComponent(filtro)}`;
+        url += `&estado=${encodeURIComponent(filtro)}`;
       }
 
       const response = await fetch(url, {

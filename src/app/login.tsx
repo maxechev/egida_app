@@ -22,10 +22,7 @@ export default function LoginScreen() {
   const [showPassword, setShowPassword] = useState(false);
 
   const handleForgotPassword = () => {
-    Alert.alert(
-      "Recuperar contraseña",
-      "Esta funcionalidad aún no está implementada.",
-    );
+    router.push("/solicitar_recuperacion");
   };
 
   const login = async () => {
