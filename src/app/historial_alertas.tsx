@@ -1,15 +1,17 @@
+import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import React, { useEffect, useState } from "react";
 import {
-    ActivityIndicator,
-    FlatList,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Alert,
+  FlatList,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
-import { API_URL } from '../constants/urlApi';
+import { API_URL } from "../constants/urlApi";
 
 interface AlertaHistorial {
   id: string;
@@ -18,6 +20,7 @@ interface AlertaHistorial {
   timestamp: Date;
   estado: string;
   userName: string;
+  usuarioId: number;
 }
 
 export default function HistorialAlertasScreen() {
@@ -26,6 +29,66 @@ export default function HistorialAlertasScreen() {
   const [filtro, setFiltro] = useState<"Todas" | "En proceso" | "Finalizado">(
     "Todas",
   );
+  // 1. Obtener tu ID actual al cargar la pantalla
+  const [miUsuarioId, setMiUsuarioId] = useState<number | null>(null);
+
+  useEffect(() => {
+    const obtenerMiId = async () => {
+      const token = await SecureStore.getItemAsync("token");
+      if (token) {
+        const payload = JSON.parse(atob(token.split(".")[1]));
+        const id = parseInt(
+          payload[
+            "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"
+          ],
+        );
+        setMiUsuarioId(id);
+      }
+    };
+
+    obtenerMiId();
+    cargarAlertas();
+  }, []);
+
+  // 2. Función para eliminar
+  const eliminarAlerta = async (id: number) => {
+    Alert.alert(
+      "Eliminar Alerta",
+      "¿Estás seguro de que quieres borrar esta alerta?",
+      [
+        { text: "Cancelar", style: "cancel" },
+        {
+          text: "Eliminar",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              const token = await SecureStore.getItemAsync("token");
+              const response = await fetch(`${API_URL}/Alerta/${id}`, {
+                method: "DELETE",
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                },
+              });
+
+              if (response.ok) {
+                // Recargar la lista para que desaparezca
+                cargarAlertas();
+              } else {
+                const data = await response.json();
+                Alert.alert("Error", data.mensaje || "No se pudo eliminar");
+              }
+            } catch (error: any) {
+              console.error("Error detallado al eliminar:", error);
+              Alert.alert(
+                "Error",
+                error.message || "Fallo de conexión al eliminar",
+              );
+            }
+          },
+        },
+      ],
+    );
+  };
 
   useEffect(() => {
     cargarAlertas();
@@ -87,6 +150,7 @@ export default function HistorialAlertasScreen() {
           timestamp: new Date(alerta.fecha),
           estado: alerta.estado || "Desconocido",
           userName: userName,
+          usuarioId: alerta.usuarioId,
         } as AlertaHistorial;
       });
 
@@ -99,47 +163,68 @@ export default function HistorialAlertasScreen() {
     }
   };
 
-  const renderItem = ({ item }: { item: AlertaHistorial }) => (
-    <TouchableOpacity
-      style={styles.card}
-      onPress={() =>
-        router.push({ pathname: "/detalle_alerta", params: { id: item.id } })
-      }
-    >
-      <View
-        style={[
-          styles.indicator,
-          {
-            backgroundColor:
-              item.estado === "En proceso" ? "#EF4444" : "#64748B",
-          },
-        ]}
-      />
+  const renderItem = ({ item }: { item: AlertaHistorial }) => {
+    // 1. Verificamos si esta alerta es mía
+    const esMia = item.usuarioId === miUsuarioId;
 
-      <View style={styles.content}>
-        <Text style={styles.hora}>
-          {item.timestamp.toLocaleTimeString("es-AR", {
-            hour: "2-digit",
-            minute: "2-digit",
-          })}
-        </Text>
-        <Text style={styles.ubicacion} numberOfLines={1}>
-          {item.direccion}
-        </Text>
-        <Text
+    return (
+      <TouchableOpacity
+        style={styles.card}
+        onPress={() =>
+          router.push({ pathname: "/detalle_alerta", params: { id: item.id } })
+        }
+      >
+        <View
           style={[
-            styles.motivo,
+            styles.indicator,
             {
-              color: item.estado === "En proceso" ? "#EF4444" : "#94A3B8",
-              fontSize: 12,
+              backgroundColor:
+                item.estado === "En proceso" ? "#EF4444" : "#64748B",
             },
           ]}
-        >
-          {item.motivo} • {item.userName}
-        </Text>
-      </View>
-    </TouchableOpacity>
-  );
+        />
+
+        <View style={styles.content}>
+          {/* 2. Fila superior: Hora a la izquierda, Basura a la derecha (si es mía) */}
+          <View style={styles.rowHeader}>
+            <Text style={styles.hora}>
+              {item.timestamp.toLocaleTimeString("es-AR", {
+                hour: "2-digit",
+                minute: "2-digit",
+              })}
+            </Text>
+
+            {esMia && (
+              <TouchableOpacity
+                onPress={(e) => {
+                  e.stopPropagation(); // 3. ¡CRUCIAL! Evita que se abra el detalle al tocar la basura
+                  eliminarAlerta(Number(item.id));
+                }}
+                style={styles.btnEliminar}
+              >
+                <Ionicons name="trash-outline" size={20} color="#FF4444" />
+              </TouchableOpacity>
+            )}
+          </View>
+
+          <Text style={styles.ubicacion} numberOfLines={1}>
+            {item.direccion}
+          </Text>
+          <Text
+            style={[
+              styles.motivo,
+              {
+                color: item.estado === "En proceso" ? "#EF4444" : "#94A3B8",
+                fontSize: 12,
+              },
+            ]}
+          >
+            {item.motivo} • {item.userName}
+          </Text>
+        </View>
+      </TouchableOpacity>
+    );
+  };
 
   if (loading) {
     return (
@@ -192,6 +277,17 @@ const styles = StyleSheet.create({
     backgroundColor: "#0B1325",
     justifyContent: "center",
     alignItems: "center",
+  },
+  rowHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 4,
+  },
+  btnEliminar: {
+    padding: 4,
+    backgroundColor: "rgba(255, 68, 68, 0.1)",
+    borderRadius: 6,
   },
   header: {
     flexDirection: "row",
