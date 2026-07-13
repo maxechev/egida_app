@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { collection, onSnapshot, orderBy, query, where } from 'firebase/firestore';
+import { collection, doc, getDoc, onSnapshot, orderBy, query, where } from 'firebase/firestore'; // ✅ Agregado getDoc y doc
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { db } from './firebase/config';
@@ -10,6 +10,7 @@ interface AlertaHistorial {
   direccion: string;
   timestamp: Date;
   estado: string;
+  userName: string; // ✅ Nuevo campo para mostrar nombre real
 }
 
 export default function HistorialAlertasScreen() {
@@ -28,19 +29,35 @@ export default function HistorialAlertasScreen() {
       );
     }
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      // ✅ CORRECCIÓN: Lectura directa del campo 'direccion'
-      const lista = snapshot.docs.map((docSnap) => {
+    const unsubscribe = onSnapshot(q, async (snapshot) => {
+      // ✅ Procesamos en paralelo para resolver usuarios sin bloquear UI
+      const promesas = snapshot.docs.map(async (docSnap) => {
         const data = docSnap.data();
+        
+        // Resolver nombre de usuario desde /usuarios/{userId}
+        let userName = 'Usuario Anónimo';
+        if (data.userId) {
+          try {
+            const userDoc = await getDoc(doc(db, 'usuarios', data.userId));
+            if (userDoc.exists()) {
+              userName = userDoc.data().displayName || 'Vecino Sin Nombre';
+            }
+          } catch (e) { 
+            console.error('Error resolviendo usuario:', e); 
+          }
+        }
+
         return {
           id: docSnap.id,
           ...data,
           timestamp: data.timestamp?.toDate() || new Date(),
           direccion: data.direccion || 'Dirección no disponible',
           estado: data.estado || 'Desconocido',
+          userName: userName // ✅ Asignamos nombre resuelto
         } as AlertaHistorial;
       });
 
+      const lista = await Promise.all(promesas);
       setAlertas(lista);
       setLoading(false);
     });
@@ -60,8 +77,9 @@ export default function HistorialAlertasScreen() {
           {item.timestamp.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })}
         </Text>
         <Text style={styles.ubicacion} numberOfLines={1}>{item.direccion}</Text>
-        <Text style={[styles.motivo, { color: item.estado === 'En proceso' ? '#EF4444' : '#94A3B8' }]}>
-          {item.motivo}
+        {/* ✅ Mostramos el nombre real del usuario */}
+        <Text style={[styles.motivo, { color: item.estado === 'En proceso' ? '#EF4444' : '#94A3B8', fontSize: 12 }]}>
+          {item.motivo} • {item.userName}
         </Text>
       </View>
     </TouchableOpacity>
