@@ -3,7 +3,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { doc, getDoc } from 'firebase/firestore';
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { db } from './firebase/config';
+import { db } from '../lib/firebase/config';
 
 export default function DetalleAlertaScreen() {
   const { id } = useLocalSearchParams();

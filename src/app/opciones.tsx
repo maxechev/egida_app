@@ -2,13 +2,13 @@ import { router } from 'expo-router';
 import { signOut } from 'firebase/auth';
 import { useState } from 'react';
 import {
-  Modal,
-  Text,
-  TouchableOpacity,
-  View,
+    Modal,
+    Text,
+    TouchableOpacity,
+    View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { auth } from './firebase/config';
+import { auth } from '../lib/firebase/config';
 
 export default function OpcionesScreen() {
   const [mostrarModal, setMostrarModal] = useState(false);

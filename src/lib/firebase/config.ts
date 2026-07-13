@@ -1,6 +1,6 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore'; // NUEVO: Importar Firestore
+import { getFirestore } from 'firebase/firestore';
 
 const firebaseConfig = {
   apiKey: 'AIzaSyBV5mUx2ACnObCspWUU8fUeOYhnsC44TWo',
@@ -14,6 +14,8 @@ const firebaseConfig = {
 // Inicializar Firebase App
 const app = initializeApp(firebaseConfig);
 
-// Exportar servicios para usar en toda la app
+// ✅ INICIALIZACIÓN ESTÁNDAR PARA EXPO GO + FIREBASE
+// Al tener @react-native-async-storage/async-storage instalado, 
+// getAuth() lo utiliza automáticamente para persistir sesiones.
 export const auth = getAuth(app);
-export const db = getFirestore(app); // NUEVO: Instancia de Firestore lista para usar
+export const db = getFirestore(app);

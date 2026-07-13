@@ -10,9 +10,8 @@ import {
   Text, TextInput, TouchableOpacity, View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { auth, db } from './firebase/config'; // Asegúrate de exportar 'db' en tu config
-
-const icon = require('../assets/images/logo_egida.png');
+import images from '../constants/imagePath';
+import { auth, db } from '../lib/firebase/config'; // Asegúrate de exportar 'db' en tu config
 
 export default function RegisterScreen() {
   const [email, setEmail] = useState('');
@@ -109,7 +108,7 @@ export default function RegisterScreen() {
         <Text style={styles.backArrow}>←</Text>
       </TouchableOpacity>
 
-      <Image source={icon} style={styles.logo} resizeMode="contain" />
+      <Image source={images.logoEgida} style={styles.logo} resizeMode="contain" />
       <Text style={styles.title}>Registrarse</Text>
 
       <TextInput placeholder="Correo electrónico" value={email} onChangeText={setEmail} style={styles.input} keyboardType="email-address" autoCapitalize="none" editable={!isLoading} />

@@ -1,15 +1,13 @@
-import {
-  View,
-  Text,
-  Image,
-  TouchableOpacity,
-} from 'react-native';
-import { StatusBar } from 'expo-status-bar';
 import { router } from 'expo-router';
-import { auth } from './firebase/config';
+import { StatusBar } from 'expo-status-bar';
+import {
+    Image,
+    Text,
+    TouchableOpacity
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-
-const icon = require('../assets/images/logo_egida.png');
+import { auth } from '../lib/firebase/config';
+import images from '../constants/imagePath';
 
 export default function VerifyEmailScreen() {
 
@@ -50,7 +48,7 @@ export default function VerifyEmailScreen() {
       </TouchableOpacity>
 
       <Image
-        source={icon}
+        source={images.logoEgida}
         style={{
           width: 180,
           height: 180,

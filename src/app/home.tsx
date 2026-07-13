@@ -6,7 +6,7 @@ import { ActivityIndicator, Alert, Modal, Pressable, StyleSheet, Text, Touchable
 import MapView, { Marker } from 'react-native-maps';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AlertaDetalleCard from '../components/alerta-detalle-card';
-import { db } from './firebase/config';
+import { db } from '../lib/firebase/config';
 
 const darkMapStyle = [
   { elementType: 'geometry', stylers: [{ color: '#0F172A' }] },

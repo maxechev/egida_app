@@ -5,7 +5,7 @@ import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { useState } from 'react';
 import { ActivityIndicator, Alert, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { auth, db } from './firebase/config';
+import { auth, db } from '../lib/firebase/config';
 
 export default function AlertaScreen() {
   const [motivo, setMotivo] = useState('');

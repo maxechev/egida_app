@@ -10,9 +10,8 @@ import {
   View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-
+import images from '../constants/imagePath';
 // Cargar el icono una sola vez fuera del componente para optimizar rendimiento
-const icon = require('../assets/images/logo_egida.png');
 
 const CheckIcon = () => (
   <View style={styles.checkCircle}>
@@ -77,7 +76,7 @@ const RecuperarContrasenia = () => {
       <View style={styles.formContainer}>
         {/* Logo Égida integrado correctamente */}
         <Image
-          source={icon}
+          source={images.logoEgida}
           style={styles.logo}
           resizeMode="contain"
         />

@@ -1,11 +1,10 @@
 import { router } from 'expo-router';
 import React, { useState } from 'react';
 import {
-    Alert, Image, StyleSheet, Text, TextInput, TouchableOpacity, View
+  Alert, Image, StyleSheet, Text, TextInput, TouchableOpacity, View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-
-const icon = require('../assets/images/logo_egida.png');
+import images from '../constants/imagePath';
 
 const SolicitarRecuperacion = () => {
   const [email, setEmail] = useState('');
@@ -42,7 +41,7 @@ const SolicitarRecuperacion = () => {
       </TouchableOpacity>
 
       <View style={styles.formContainer}>
-        <Image source={icon} style={styles.logo} resizeMode="contain" />
+        <Image source={images.logoEgida} style={styles.logo} resizeMode="contain" />
         
         <Text style={styles.title}>Recuperar contraseña</Text>
         <Text style={styles.subtitle}>

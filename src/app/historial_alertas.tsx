@@ -2,7 +2,7 @@ import { router } from 'expo-router';
 import { collection, doc, getDoc, onSnapshot, orderBy, query, where } from 'firebase/firestore'; // ✅ Agregado getDoc y doc
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { db } from './firebase/config';
+import { db } from '../lib/firebase/config';
 
 interface AlertaHistorial {
   id: string;
