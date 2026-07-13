@@ -1,41 +1,159 @@
-import { View, Text, TouchableOpacity, Switch } from 'react-native';
-import { router } from 'expo-router';
-import { useState } from 'react';
-import { Picker } from '@react-native-picker/picker';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { Picker } from "@react-native-picker/picker";
+import { Audio } from "expo-av";
+import { router } from "expo-router";
+import * as SecureStore from "expo-secure-store";
+import { useEffect, useState } from "react";
+import {
+  ActivityIndicator,
+  SafeAreaView,
+  Switch,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
+
+const API_URL = "http://192.168.1.10:5285/api";
 
 export default function ConfigSonidosScreen() {
-  const [recibir, setRecibir] = useState(true);
-  const [repeticion, setRepeticion] = useState(true);
-  const [alerta, setAlerta] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [guardando, setGuardando] = useState(false);
+
+  const [config, setConfig] = useState({
+    notificacionesActivas: true,
+    vibracionNotificaciones: true,
+    tiposAlertaNotificacion: [] as string[],
+    gestoApagadoActivo: true,
+    confirmacionRapida: true,
+    tipoAlertaGesto: "",
+    sonidosActivos: true,
+    vibracionSonido: true,
+    tipoSonido: "",
+  });
+
+  useEffect(() => {
+    cargarConfiguracion();
+  }, []);
+
+  const cargarConfiguracion = async () => {
+    try {
+      const token = await SecureStore.getItemAsync("token");
+      if (!token) return;
+
+      const response = await fetch(
+        `${API_URL}/Configuracion/mi-configuracion`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        setConfig({
+          notificacionesActivas: data.notificacionesActivas ?? true,
+          vibracionNotificaciones: data.vibracionNotificaciones ?? true,
+          tiposAlertaNotificacion: data.tiposAlertaNotificacion || [],
+          gestoApagadoActivo: data.gestoApagadoActivo ?? true,
+          confirmacionRapida: data.confirmacionRapida ?? true,
+          tipoAlertaGesto: data.tipoAlertaGesto || "",
+          sonidosActivos: data.sonidosActivos ?? true,
+          vibracionSonido: data.vibracionSonido ?? true,
+          tipoSonido: data.tipoSonido || "",
+        });
+      }
+    } catch (error) {
+      console.error("Error al cargar configuración:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const guardarConfiguracion = async (nuevaConfig: typeof config) => {
+    try {
+      setGuardando(true);
+      const token = await SecureStore.getItemAsync("token");
+      if (!token) return;
+
+      await fetch(`${API_URL}/Configuracion/actualizar`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(nuevaConfig),
+      });
+    } catch (error) {
+      console.error("Error al guardar:", error);
+    } finally {
+      setGuardando(false);
+    }
+  };
+
+  const actualizarCampo = (campo: string, valor: any) => {
+    const nuevaConfig = { ...config, [campo]: valor };
+    setConfig(nuevaConfig);
+    guardarConfiguracion(nuevaConfig);
+  };
+
+  // Reproducir sonido de prueba
+  // Mapeo estático de los sonidos (React Native necesita saber las rutas al compilar)
+  const sonidosMap: Record<string, any> = {
+    Sirena: require("../../assets/sonidos/Sirena.mp3"),
+    "Alarma de android": require("../../assets/sonidos/Alarma de android.mp3"),
+    "Sonido 3": require("../../assets/sonidos/Sonido 3.mp3"),
+    "Sonido 4": require("../../assets/sonidos/Sonido 4.mp3"),
+    "Sonido 5": require("../../assets/sonidos/Sonido 5.mp3"),
+    "Sonido 6": require("../../assets/sonidos/Sonido 6.mp3"),
+  };
+
+  const reproducirSonido = async (tipoSonido: string) => {
+    if (!config.sonidosActivos || !tipoSonido) return;
+
+    const sonidoPath = sonidosMap[tipoSonido];
+    if (!sonidoPath) return;
+
+    try {
+      const { sound } = await Audio.Sound.createAsync(sonidoPath, {
+        shouldPlay: true,
+      });
+      await sound.playAsync();
+    } catch (error) {
+      console.error("Error al reproducir sonido:", error);
+    }
+  };
+
+  if (loading) {
+    return (
+      <View
+        style={{
+          flex: 1,
+          backgroundColor: "#10172B",
+          justifyContent: "center",
+          alignItems: "center",
+        }}
+      >
+        <ActivityIndicator size="large" color="#FF4444" />
+      </View>
+    );
+  }
 
   return (
-    <SafeAreaView
-      style={{
-        flex: 1,
-        backgroundColor: '#10172B',
-      }}
-    >
+    <SafeAreaView style={{ flex: 1, backgroundColor: "#10172B" }}>
       <TouchableOpacity
-        style={{
-          position: 'absolute',
-          top: 50,
-          left: 20,
-        }}
+        style={{ position: "absolute", top: 50, left: 20 }}
         onPress={() => router.back()}
       >
-        <Text style={{ color: 'white', fontSize: 30 }}>←</Text>
+        <Text style={{ color: "white", fontSize: 30 }}>←</Text>
       </TouchableOpacity>
 
       <Text
         style={{
-          color: 'white',
+          color: "white",
           fontSize: 32,
-          fontWeight: 'bold',
-          alignSelf: 'center',
+          fontWeight: "bold",
+          alignSelf: "center",
           marginTop: 50,
           marginBottom: 30,
-          textAlign: 'center',
+          textAlign: "center",
         }}
       >
         Configuración{"\n"}de sonidos
@@ -43,61 +161,45 @@ export default function ConfigSonidosScreen() {
 
       <View style={styles.section}>
         <Text style={styles.description}>
-          Atención: si desactivas esta opción, seguirás recibiendo 
-          notificaciones solo que el teléfono ya no emitirá ningún
-          sonido al mostrarlo        
+          Atención: si desactivas esta opción, seguirás recibiendo
+          notificaciones solo que el teléfono ya no emitirá ningún sonido al
+          mostrarlo
         </Text>
 
         <View style={styles.row}>
-          <Text style={styles.title}>
-            Activar/Desactivar
-          </Text>
-
+          <Text style={styles.title}>Activar/Desactivar</Text>
           <Switch
-            value={recibir}
-            onValueChange={setRecibir}
+            value={config.sonidosActivos}
+            onValueChange={(val) => actualizarCampo("sonidosActivos", val)}
           />
         </View>
       </View>
 
       <View style={styles.card}>
-                    <Text style={styles.title}>Vibración</Text>
-            
-                    <Text style={styles.description}>
-                      Atención: si desactivas esta opción, seguirás recibiendo notificaciones solo que sin que el teléfono vibre al mostrarlo
-                    </Text>
-            
-                    <View style={styles.row}>
-                      <Text style={styles.switchText}>
-                        Activar/Desactivar
-                      </Text>
-            
-                      <Switch
-                        value={repeticion}
-                        onValueChange={setRepeticion}
-                      />
-                    </View>
-                  </View>
+        <Text style={styles.title}>Vibración</Text>
+        <Text style={styles.description}>
+          Atención: si desactivas esta opción, seguirás recibiendo
+          notificaciones solo que sin que el teléfono vibre al mostrarlo
+        </Text>
 
-      <View
-        style={{
-          backgroundColor: 'white',
-          width: 250,
-          alignSelf: 'center',
-          marginTop: 20,
-        }}
-      >
-        <Picker
-          selectedValue={alerta}
-          onValueChange={(itemValue) =>
-            setAlerta(itemValue)
-          }
-        >
-          <Picker.Item
-            label="Tipo de alerta rápida"
-            value=""
+        <View style={styles.row}>
+          <Text style={styles.switchText}>Activar/Desactivar</Text>
+          <Switch
+            value={config.vibracionSonido}
+            onValueChange={(val) => actualizarCampo("vibracionSonido", val)}
           />
+        </View>
+      </View>
 
+      <View style={styles.pickerContainer}>
+        <Picker
+          selectedValue={config.tipoSonido}
+          onValueChange={(itemValue) => {
+            actualizarCampo("tipoSonido", itemValue);
+            if (itemValue) reproducirSonido(itemValue);
+          }}
+        >
+          <Picker.Item label="Tipo de sonido" value="" />
           <Picker.Item label="Sirena" value="Sirena" />
           <Picker.Item label="Alarma de android" value="Alarma de android" />
           <Picker.Item label="Sonido 3" value="Sonido 3" />
@@ -106,67 +208,62 @@ export default function ConfigSonidosScreen() {
           <Picker.Item label="Sonido 6" value="Sonido 6" />
         </Picker>
       </View>
+
+      {guardando && (
+        <View
+          style={{
+            position: "absolute",
+            bottom: 20,
+            right: 20,
+            backgroundColor: "#1E293B",
+            padding: 10,
+            borderRadius: 8,
+          }}
+        >
+          <ActivityIndicator size="small" color="white" />
+        </View>
+      )}
     </SafeAreaView>
   );
 }
 
 const styles = {
-card: {
+  card: {
     borderTopWidth: 1,
-    borderColor: '#6B7280',
+    borderColor: "#6B7280",
     paddingHorizontal: 20,
     paddingVertical: 12,
   },
-
   switchText: {
-    color: 'white',
+    color: "white",
     fontSize: 18,
-    fontWeight: 'bold' as const,
+    fontWeight: "bold" as const,
   },
-
   section: {
     borderTopWidth: 1,
-    borderColor: '#666',
+    borderColor: "#666",
     padding: 20,
   },
-
   description: {
-    color: 'white',
+    color: "white",
     fontSize: 11,
     marginBottom: 10,
   },
-
   row: {
-    flexDirection: 'row' as const,
-    justifyContent: 'space-between' as const,
-    alignItems: 'center' as const,
+    flexDirection: "row" as const,
+    justifyContent: "space-between" as const,
+    alignItems: "center" as const,
   },
-
   title: {
-    color: 'white',
+    color: "white",
     fontSize: 18,
-    fontWeight: 'bold' as const,
+    fontWeight: "bold" as const,
   },
-  lista: {
-  backgroundColor: 'white',
-  width: 250,
-  alignSelf: 'center' as const,
-  marginTop: 20 as const,
-},
-
-item: {
-  flexDirection: 'row' as const,
-  justifyContent: 'space-between' as const,
-  alignItems: 'center' as const,
-  paddingHorizontal: 10 as const,
-  paddingVertical: 10 as const,
-  borderBottomWidth: 1 as const,
-  borderColor: '#ddd' as const,
-},
-
-itemText: {
-  color: '#333' as const,
-  fontSize: 14 as const,
-  width: 190 as const,
-},
+  pickerContainer: {
+    backgroundColor: "white",
+    width: 250,
+    alignSelf: "center" as const,
+    marginTop: 20,
+    borderRadius: 8,
+  },
 };

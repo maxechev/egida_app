@@ -1,8 +1,17 @@
+import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import { useEffect, useState } from "react";
-import { Text, TouchableOpacity, View } from "react-native";
+import {
+  ActivityIndicator,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+
+const API_URL = "http://192.168.1.10:5285/api";
 
 export default function PerfilScreen() {
   const [datos, setDatos] = useState({
@@ -11,7 +20,10 @@ export default function PerfilScreen() {
     correo: "",
     contacto: "",
     alias: "",
+    edad: 0,
   });
+  const [loading, setLoading] = useState(true);
+
   useEffect(() => {
     cargarPerfil();
   }, []);
@@ -21,14 +33,11 @@ export default function PerfilScreen() {
       const token = await SecureStore.getItemAsync("token");
       if (!token) return;
 
-      const response = await fetch(
-        "http://192.168.1.10:5285/api/Perfil/mi-perfil",
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+      const response = await fetch(`${API_URL}/Perfil/mi-perfil`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
         },
-      );
+      });
 
       if (response.ok) {
         const data = await response.json();
@@ -37,106 +46,138 @@ export default function PerfilScreen() {
           apellido: data.apellido,
           correo: data.correo,
           contacto: data.contacto,
-          alias: data.alias,
+          alias: data.alias || "",
+          edad: data.edad || 0,
         });
       }
     } catch (error) {
       console.error("Error al cargar perfil:", error);
+    } finally {
+      setLoading(false);
     }
   };
-  return (
-    <SafeAreaView
-      style={{
-        flex: 1,
-        backgroundColor: "#10172B",
-        alignItems: "center",
-      }}
-    >
-      <TouchableOpacity
-        style={{
-          position: "absolute",
-          left: 20,
-          top: 50,
-        }}
-        onPress={() => router.back()}
-      >
-        <Text
-          style={{
-            color: "white",
-            fontSize: 30,
-          }}
-        >
-          ←
-        </Text>
-      </TouchableOpacity>
 
-      <View
-        style={{
-          marginTop: 60,
-          width: 120,
-          height: 120,
-          borderRadius: 60,
-          backgroundColor: "#F0F0F2",
-          justifyContent: "center",
-          alignItems: "center",
-        }}
-      >
-        <Text style={{ fontSize: 70 }}>👤</Text>
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#FF4444" />
+      </View>
+    );
+  }
+
+  return (
+    <SafeAreaView style={styles.container}>
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => router.back()}>
+          <Text style={styles.backIcon}>←</Text>
+        </TouchableOpacity>
       </View>
 
-      <View
-        style={{
-          marginTop: 15,
-          gap: 10,
-        }}
-      >
-        <View style={styles.box}>
-          <Text>{datos.nombre}</Text>
+      <View style={styles.content}>
+        <View style={styles.avatar}>
+          <Ionicons name="person" size={80} color="white" />
         </View>
 
-        <View style={styles.box}>
-          <Text>{datos.apellido}</Text>
-        </View>
+        <View style={styles.infoContainer}>
+          {datos.alias ? (
+            <>
+              <Text style={styles.label}>Alias</Text>
+              <Text style={styles.value}>{datos.alias}</Text>
+            </>
+          ) : null}
 
-        <View style={styles.box}>
-          <Text>{datos.correo}</Text>
-        </View>
+          <Text style={styles.label}>Nombre</Text>
+          <Text style={styles.value}>{datos.nombre}</Text>
 
-        <View style={styles.box}>
-          <Text>{datos.contacto}</Text>
-        </View>
+          <Text style={styles.label}>Apellido</Text>
+          <Text style={styles.value}>{datos.apellido}</Text>
 
-        <View style={styles.box}>
-          <Text>{datos.alias}</Text>
+          <Text style={styles.label}>Correo</Text>
+          <Text style={styles.value}>{datos.correo}</Text>
+
+          <Text style={styles.label}>Contacto</Text>
+          <Text style={styles.value}>{datos.contacto}</Text>
         </View>
 
         <TouchableOpacity
-          style={{
-            ...styles.box,
-            justifyContent: "center",
-            alignItems: "center",
-          }}
+          style={styles.btnPrivacidad}
           onPress={() => router.push("/privacidad")}
         >
-          <Text
-            style={{
-              fontWeight: "bold",
-            }}
-          >
-            Privacidad
-          </Text>
+          <Ionicons name="lock-closed-outline" size={20} color="black" />
+          <Text style={styles.btnPrivacidadText}>Privacidad</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
   );
 }
 
-const styles = {
-  box: {
-    backgroundColor: "#F0F0F2",
-    width: 180,
-    height: 35,
-    justifyContent: "center" as const,
-    paddingHorizontal: 10,
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "#10172B",
   },
-};
+  loadingContainer: {
+    flex: 1,
+    backgroundColor: "#10172B",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  header: {
+    paddingHorizontal: 20,
+    paddingTop: 60,
+    paddingBottom: 20,
+  },
+  backIcon: {
+    color: "white",
+    fontSize: 30,
+  },
+  content: {
+    flex: 1,
+    alignItems: "center",
+    paddingHorizontal: 20,
+  },
+  avatar: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: "#1E293B",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 30,
+  },
+  infoContainer: {
+    width: "100%",
+    maxWidth: 350,
+  },
+  label: {
+    color: "#94A3B8",
+    fontSize: 12,
+    marginBottom: 5,
+    marginTop: 15,
+  },
+  value: {
+    color: "white",
+    fontSize: 16,
+    backgroundColor: "#1E293B",
+    padding: 12,
+    borderRadius: 8,
+  },
+  btnPrivacidad: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#F0F0F2",
+    paddingVertical: 15,
+    paddingHorizontal: 40,
+    borderRadius: 8,
+    marginTop: 30,
+    width: "100%",
+    maxWidth: 350,
+    gap: 10,
+  },
+  btnPrivacidadText: {
+    color: "black",
+    fontWeight: "bold",
+    fontSize: 16,
+  },
+});
