@@ -3,14 +3,14 @@ import { router } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import { useEffect, useState } from "react";
 import {
-  ActivityIndicator,
-  Alert,
-  Pressable,
-  SafeAreaView,
-  Switch,
-  Text,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    Alert,
+    Pressable,
+    SafeAreaView,
+    Switch,
+    Text,
+    TouchableOpacity,
+    View,
 } from "react-native";
 
 const API_URL = "http://192.168.1.10:5285/api";
@@ -156,6 +156,17 @@ export default function ConfiNotificacionesScreen() {
     );
   }
 
+  // ... dentro del componente, antes del return:
+  const probarNotificacion = async () => {
+    await Notifications.scheduleNotificationAsync({
+      content: {
+        title: "¡Funciona! 🚀",
+        body: "Si ves esto, las notificaciones están 100% operativas.",
+      },
+      trigger: null, // null significa "mostrar YA"
+    });
+  };
+
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: "#10172B" }}>
       <TouchableOpacity
@@ -211,6 +222,21 @@ export default function ConfiNotificacionesScreen() {
           />
         </View>
       </View>
+
+      <TouchableOpacity
+        style={{
+          backgroundColor: "green",
+          padding: 15,
+          borderRadius: 8,
+          marginTop: 20,
+          alignItems: "center",
+        }}
+        onPress={probarNotificacion}
+      >
+        <Text style={{ color: "white", fontWeight: "bold" }}>
+          PROBAR NOTIFICACIÓN AHORA
+        </Text>
+      </TouchableOpacity>
 
       <View style={styles.selector}>
         <Pressable style={styles.prioridad} onPress={() => {}}>

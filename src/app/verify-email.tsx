@@ -3,12 +3,12 @@ import * as SecureStore from "expo-secure-store";
 import { StatusBar } from "expo-status-bar";
 import { useEffect, useState } from "react";
 import {
-  ActivityIndicator,
-  Alert,
-  Image,
-  Text,
-  TextInput,
-  TouchableOpacity
+    ActivityIndicator,
+    Alert,
+    Image,
+    Text,
+    TextInput,
+    TouchableOpacity,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import images from "../constants/imagePath";
@@ -93,7 +93,10 @@ export default function VerifyEmailScreen() {
         <Text style={{ color: "white", fontSize: 30 }}>←</Text>
       </TouchableOpacity>
 
-      <Image source={images.logoEgida} style={{ width: 180, height: 180, marginTop: 40 }} />
+      <Image
+        source={images.logoEgida}
+        style={{ width: 180, height: 180, marginTop: 40 }}
+      />
 
       <Text
         style={{
