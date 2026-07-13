@@ -60,7 +60,8 @@
         {
           "locationAlwaysAndWhenInUsePermission": "Égida necesita tu ubicación para enviar y visualizar alertas de seguridad en el mapa."
         }
-      ]
+      ],
+      "expo-secure-store"
     ],
     "experiments": {
       "typedRoutes": true,
