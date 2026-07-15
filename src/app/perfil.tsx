@@ -3,14 +3,14 @@ import { router } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import { useEffect, useState } from "react";
 import {
-    ActivityIndicator,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { API_URL } from '../constants/urlApi';
+import { API_URL } from "../constants/urlApi";
 
 export default function PerfilScreen() {
   const [datos, setDatos] = useState({
@@ -76,7 +76,6 @@ export default function PerfilScreen() {
         <View style={styles.avatar}>
           <Ionicons name="person" size={80} color="white" />
         </View>
-
         <View style={styles.infoContainer}>
           {datos.alias ? (
             <>
@@ -97,13 +96,20 @@ export default function PerfilScreen() {
           <Text style={styles.label}>Contacto</Text>
           <Text style={styles.value}>{datos.contacto}</Text>
         </View>
-
         <TouchableOpacity
           style={styles.btnPrivacidad}
           onPress={() => router.push("/privacidad")}
         >
           <Ionicons name="lock-closed-outline" size={20} color="black" />
           <Text style={styles.btnPrivacidadText}>Privacidad</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.btnEditar}
+          onPress={() => router.push("/editar_perfil")}
+        >
+          <Ionicons name="create-outline" size={20} color="black" />
+          <Text style={styles.btnEditarText}>Editar Perfil</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -142,7 +148,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#1E293B",
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 30,
+    marginBottom: 10,
   },
   infoContainer: {
     width: "100%",
@@ -175,6 +181,24 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   btnPrivacidadText: {
+    color: "black",
+    fontWeight: "bold",
+    fontSize: 16,
+  },
+  btnEditar: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#F0F0F2",
+    paddingVertical: 15,
+    paddingHorizontal: 40,
+    borderRadius: 8,
+    marginTop: 20,
+    width: "100%",
+    maxWidth: 350,
+    gap: 10,
+  },
+  btnEditarText: {
     color: "black",
     fontWeight: "bold",
     fontSize: 16,

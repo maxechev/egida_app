@@ -1,7 +1,7 @@
 import * as Location from "expo-location";
-import { router } from "expo-router";
+import { router, useFocusEffect } from "expo-router";
 import * as SecureStore from "expo-secure-store";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react"; // ✅ Agregado useCallback
 import {
   ActivityIndicator,
   Alert,
@@ -13,9 +13,12 @@ import {
   View,
 } from "react-native";
 import MapView, { Marker } from "react-native-maps";
-import { SafeAreaView } from "react-native-safe-area-context";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
 import AlertaDetalleCard from "../components/alerta-detalle-card";
-import { API_URL } from '../constants/urlApi';
+import { API_URL } from "../constants/urlApi";
 
 const darkMapStyle = [
   { elementType: "geometry", stylers: [{ color: "#0F172A" }] },
@@ -41,6 +44,8 @@ const darkMapStyle = [
 ];
 
 export default function HomeScreen() {
+  const insets = useSafeAreaInsets();
+
   const [region, setRegion] = useState<any>(null);
   const [alertas, setAlertas] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -51,7 +56,6 @@ export default function HomeScreen() {
   const mapRef = useRef<MapView>(null);
   const usuariosCache = useRef<Record<string, any>>({});
 
-  // 1. Inicializar ubicación del usuario
   useEffect(() => {
     (async () => {
       try {
@@ -82,22 +86,17 @@ export default function HomeScreen() {
     })();
   }, []);
 
-  // 2. Cargar red activa
   useEffect(() => {
     (async () => {
       const redActiva = await SecureStore.getItemAsync("redActivaId");
       if (redActiva) {
         const redId = parseInt(redActiva);
         setRedActivaId(redId);
-
         try {
           const token = await SecureStore.getItemAsync("token");
           const response = await fetch(`${API_URL}/Red/${redId}`, {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
+            headers: { Authorization: `Bearer ${token}` },
           });
-
           if (response.ok) {
             const data = await response.json();
             setRedActivaNombre(data.nombre);
@@ -110,10 +109,16 @@ export default function HomeScreen() {
     })();
   }, []);
 
-  // 3. Cargar alertas desde la API
+  useFocusEffect(
+    useCallback(() => {
+      if (region && redActivaId) {
+        cargarAlertas();
+      }
+    }, [region, redActivaId]),
+  );
+
   useEffect(() => {
     if (!region) return;
-
     cargarAlertas();
   }, [region, redActivaId]);
 
@@ -130,16 +135,7 @@ export default function HomeScreen() {
         },
       );
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.log("Status:", response.status);
-        console.log(
-          "URL:",
-          `${API_URL}/Alerta?redId=${redActivaId}&minutos=30`,
-        );
-        console.log("Respuesta:", errorText);
-        throw new Error("Error al cargar alertas");
-      }
+      if (!response.ok) throw new Error("Error al cargar alertas");
 
       const alertasData = await response.json();
 
@@ -149,14 +145,22 @@ export default function HomeScreen() {
 
           if (!usuariosCache.current[alerta.usuarioId]) {
             try {
+              const token = await SecureStore.getItemAsync("token");
               const userResponse = await fetch(
                 `${API_URL}/Usuario/${alerta.usuarioId}`,
+                {
+                  headers: { Authorization: `Bearer ${token}` },
+                },
               );
               if (userResponse.ok) {
                 const userData = await userResponse.json();
-                usuariosCache.current[alerta.usuarioId] = {
-                  displayName: `${userData.nombre} ${userData.apellido}`,
-                };
+                let displayName = "Vecino Anónimo";
+                if (userData.nombre) {
+                  displayName = `${userData.nombre} ${userData.apellido}`;
+                } else if (userData.alias) {
+                  displayName = userData.alias;
+                }
+                usuariosCache.current[alerta.usuarioId] = { displayName };
               }
             } catch (e) {
               console.error("Error al cargar usuario:", e);
@@ -170,10 +174,7 @@ export default function HomeScreen() {
           return {
             id: alerta.id.toString(),
             motivo: alerta.tipo,
-            coordenadas: {
-              lat: alerta.latitud,
-              lng: alerta.longitud,
-            },
+            coordenadas: { lat: alerta.latitud, lng: alerta.longitud },
             direccion: alerta.ubicacion,
             timestamp: new Date(alerta.fecha),
             userId: alerta.usuarioId.toString(),
@@ -190,19 +191,6 @@ export default function HomeScreen() {
       console.error("Error al cargar alertas:", error);
       Alert.alert("Error", "No se pudieron cargar las alertas");
       setLoading(false);
-    }
-  };
-
-  const centerOnUser = async () => {
-    try {
-      const loc = await Location.getCurrentPositionAsync({});
-      mapRef.current?.animateToRegion({
-        ...loc.coords,
-        latitudeDelta: 0.01,
-        longitudeDelta: 0.01,
-      });
-    } catch (error) {
-      console.error(error);
     }
   };
 
@@ -277,31 +265,27 @@ export default function HomeScreen() {
         </Pressable>
       </Modal>
 
-      {/* Controles Superiores */}
+      {/* ✅ 3. Controles Superiores: Usamos insets.top para empujarlos debajo de la muesca */}
       <TouchableOpacity
-        style={styles.menuBtn}
+        style={[styles.menuBtn, { top: 15 + insets.top }]}
         onPress={() => router.push("/opciones")}
       >
         <Text style={styles.menuIcon}>☰</Text>
       </TouchableOpacity>
-      <View style={styles.redBadge}>
+
+      <View style={[styles.redBadge, { top: 15 + insets.top }]}>
         <Text style={styles.redText}>Red actual: {redActivaNombre}</Text>
       </View>
-      <View style={styles.rightControls}>
+
+      <View style={[styles.rightControls, { top: 65 + insets.top }]}>
         <TouchableOpacity onPress={() => router.push("/red")}>
           <Text style={styles.controlIcon}>🌐</Text>
         </TouchableOpacity>
-        <TouchableOpacity>
-          <Text style={styles.controlIcon}></Text>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={centerOnUser}>
-          <Text style={styles.controlIcon}>◎</Text>
-        </TouchableOpacity>
       </View>
 
-      {/* Botón Enviar Alerta */}
+      {/* ✅ 4. Botón Enviar Alerta: Usamos insets.bottom para evitar el indicador de inicio de iOS */}
       <TouchableOpacity
-        style={styles.sendAlertBtn}
+        style={[styles.sendAlertBtn, { bottom: 20 + insets.bottom }]}
         onPress={() => router.push("/alerta")}
       >
         <Text style={styles.sendAlertText}>ENVIAR ALERTA</Text>
@@ -338,9 +322,9 @@ const styles = StyleSheet.create({
   },
   closeText: { color: "#FFF", fontWeight: "bold", fontSize: 14 },
 
+  // ✅ Se eliminaron los "top: 60" fijos de aquí, ahora se manejan dinámicamente con inline styles
   menuBtn: {
     position: "absolute",
-    top: 60,
     left: 20,
     backgroundColor: "#FFF",
     width: 50,
@@ -351,9 +335,9 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
   menuIcon: { fontSize: 24 },
+
   redBadge: {
     position: "absolute",
-    top: 60,
     alignSelf: "center",
     backgroundColor: "#FFF",
     paddingHorizontal: 15,
@@ -362,10 +346,10 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
   redText: { color: "#0F172A", fontWeight: "bold", fontSize: 13 },
+
   rightControls: {
     position: "absolute",
-    top: 60,
-    right: 20,
+    right: 13,
     gap: 20,
     zIndex: 10,
   },
@@ -378,9 +362,9 @@ const styles = StyleSheet.create({
     textShadowRadius: 3,
   },
 
+  // ✅ Se eliminó el "bottom: 40" fijo, ahora se maneja dinámicamente
   sendAlertBtn: {
     position: "absolute",
-    bottom: 40,
     alignSelf: "center",
     backgroundColor: "#FF4444",
     width: 220,

@@ -1,53 +1,50 @@
 import { API_URL } from "@/src/constants/urlApi";
 import { Ionicons } from "@expo/vector-icons";
-import { router, useLocalSearchParams } from "expo-router";
+import { router } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import { useEffect, useRef, useState } from "react";
 import {
-    ActivityIndicator,
-    FlatList,
-    KeyboardAvoidingView,
-    Platform,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  FlatList,
+  KeyboardAvoidingView,
+  Platform,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import {
-    SafeAreaView,
-    useSafeAreaInsets,
+  SafeAreaView,
+  useSafeAreaInsets,
 } from "react-native-safe-area-context";
 
-interface Mensaje {
+interface MensajeRed {
   id: number;
-  remitenteId: number;
+  usuarioId: number;
+  nombreMostrar: string;
   mensaje: string;
   fecha: string;
 }
 
-export default function ChatScreen() {
-  const params = useLocalSearchParams();
-  const destinatarioId = parseInt(params.usuarioId as string);
-  const nombreDestinatario = params.nombre as string;
-
-  const [mensajes, setMensajes] = useState<Mensaje[]>([]);
+export default function ChatRedScreen() {
+  const [mensajes, setMensajes] = useState<MensajeRed[]>([]);
   const [nuevoMensaje, setNuevoMensaje] = useState("");
   const [loading, setLoading] = useState(true);
   const [enviando, setEnviando] = useState(false);
+  const [redId, setRedId] = useState<number>(1);
+  const [redNombre, setRedNombre] = useState<string>("Red");
+  const [miUsuarioId, setMiUsuarioId] = useState<number | null>(null);
 
   const flatListRef = useRef<FlatList>(null);
   const insets = useSafeAreaInsets();
-  const [miUsuarioId, setMiUsuarioId] = useState<number | null>(null);
-  const [mostrarToast, setMostrarToast] = useState(false);
-  const [ultimoMensajeId, setUltimoMensajeId] = useState<number>(0);
-  const [mostrarNotificacion, setMostrarNotificacion] = useState(false);
-  const [nuevoMensajeDe, setNuevoMensajeDe] = useState("");
 
-  // 1. Obtener mi ID al iniciar
+  // 1. Cargar red activa y mi ID
   useEffect(() => {
-    const obtenerMiId = async () => {
+    const inicializar = async () => {
       const token = await SecureStore.getItemAsync("token");
+      const redActivaStr = await SecureStore.getItemAsync("redActivaId");
+
       if (token) {
         const payload = JSON.parse(atob(token.split(".")[1]));
         const id = parseInt(
@@ -57,28 +54,38 @@ export default function ChatScreen() {
         );
         setMiUsuarioId(id);
       }
+
+      if (redActivaStr) {
+        const redIdNum = parseInt(redActivaStr);
+        setRedId(redIdNum);
+
+        try {
+          const response = await fetch(`${API_URL}/Red/${redIdNum}`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          if (response.ok) {
+            const data = await response.json();
+            setRedNombre(data.nombre);
+          }
+        } catch (error) {
+          console.error("Error cargando red:", error);
+        }
+      }
     };
-    obtenerMiId();
+    inicializar();
   }, []);
 
-  // 2. Cargar mensajes y polling cada 4 segundos
-  // Estado para evitar notificación falsa al abrir el chat por primera vez
-  const [esPrimeraCarga, setEsPrimeraCarga] = useState(true);
-
-  // 2. Cargar mensajes y polling cada 4 segundos
+  // 2. Polling de mensajes cada 4 segundos
   useEffect(() => {
-    if (!miUsuarioId) return;
+    if (!redId || !miUsuarioId) return;
 
     const marcarLeidos = async () => {
       try {
         const token = await SecureStore.getItemAsync("token");
-        await fetch(
-          `${API_URL}/MensajeNoLeido/privados/marcar-leido/${destinatarioId}`,
-          {
-            method: "POST",
-            headers: { Authorization: `Bearer ${token}` },
-          },
-        );
+        await fetch(`${API_URL}/MensajeNoLeido/red/marcar-leido/${redId}`, {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}` },
+        });
       } catch (error) {
         console.error("Error marcando como leído:", error);
       }
@@ -89,33 +96,11 @@ export default function ChatScreen() {
     const cargarMensajes = async () => {
       try {
         const token = await SecureStore.getItemAsync("token");
-        const response = await fetch(`${API_URL}/Mensaje/${destinatarioId}`, {
+        const response = await fetch(`${API_URL}/MensajeRed/${redId}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (response.ok) {
           const data = await response.json();
-
-          if (data.length > 0) {
-            const ultimoMsg = data[data.length - 1];
-
-            // ✅ Solo mostrar notificación si NO es la primera carga,
-            // el mensaje es del otro, y el ID cambió
-            if (
-              !esPrimeraCarga &&
-              ultimoMsg.remitenteId !== miUsuarioId &&
-              ultimoMsg.id !== ultimoMensajeId
-            ) {
-              setUltimoMensajeId(ultimoMsg.id);
-              setNuevoMensajeDe(nombreDestinatario);
-              setMostrarNotificacion(true);
-              setTimeout(() => setMostrarNotificacion(false), 3000);
-            }
-
-            // Actualizamos el ID y marcamos que ya pasó la primera carga
-            setUltimoMensajeId(ultimoMsg.id);
-            if (esPrimeraCarga) setEsPrimeraCarga(false);
-          }
-
           setMensajes(data);
           setTimeout(() => {
             flatListRef.current?.scrollToEnd({ animated: true });
@@ -131,13 +116,7 @@ export default function ChatScreen() {
     cargarMensajes();
     const intervalo = setInterval(cargarMensajes, 4000);
     return () => clearInterval(intervalo);
-  }, [
-    miUsuarioId,
-    destinatarioId,
-    ultimoMensajeId,
-    nombreDestinatario,
-    esPrimeraCarga,
-  ]);
+  }, [redId, miUsuarioId]);
 
   const enviarMensaje = async () => {
     if (!nuevoMensaje.trim()) return;
@@ -145,27 +124,23 @@ export default function ChatScreen() {
     setEnviando(true);
     try {
       const token = await SecureStore.getItemAsync("token");
-      const response = await fetch(`${API_URL}/Mensaje`, {
+      const response = await fetch(`${API_URL}/MensajeRed`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          destinatarioId: destinatarioId,
+          redId: redId,
           mensaje: nuevoMensaje.trim(),
         }),
       });
 
       if (response.ok) {
         setNuevoMensaje("");
-
-        setMostrarToast(true);
-        setTimeout(() => setMostrarToast(false), 2000);
-
-        const token2 = await SecureStore.getItemAsync("token");
-        const res = await fetch(`${API_URL}/Mensaje/${destinatarioId}`, {
-          headers: { Authorization: `Bearer ${token2}` },
+        // Recarga inmediata
+        const res = await fetch(`${API_URL}/MensajeRed/${redId}`, {
+          headers: { Authorization: `Bearer ${token}` },
         });
         if (res.ok) {
           const data = await res.json();
@@ -185,16 +160,14 @@ export default function ChatScreen() {
 
   // Agrupar mensajes consecutivos del mismo usuario
   const renderMensajesAgrupados = () => {
-    const grupos: { esMio: boolean; mensajes: Mensaje[] }[] = [];
+    const grupos: { nombre: string; mensajes: MensajeRed[] }[] = [];
 
     mensajes.forEach((msg) => {
-      const esMio = msg.remitenteId === miUsuarioId;
       const ultimoGrupo = grupos[grupos.length - 1];
-
-      if (ultimoGrupo && ultimoGrupo.esMio === esMio) {
+      if (ultimoGrupo && ultimoGrupo.nombre === msg.nombreMostrar) {
         ultimoGrupo.mensajes.push(msg);
       } else {
-        grupos.push({ esMio, mensajes: [msg] });
+        grupos.push({ nombre: msg.nombreMostrar, mensajes: [msg] });
       }
     });
 
@@ -204,16 +177,21 @@ export default function ChatScreen() {
   const renderItem = ({
     item,
   }: {
-    item: { esMio: boolean; mensajes: Mensaje[] };
+    item: { nombre: string; mensajes: MensajeRed[] };
   }) => {
+    const esMio = item.mensajes[0].usuarioId === miUsuarioId;
+
     return (
       <View style={styles.grupoMensaje}>
+        {/* Nombre del remitente (no mostrar si es mío) */}
+        {!esMio && <Text style={styles.nombreRemitente}>{item.nombre}</Text>}
+
         {item.mensajes.map((msg) => (
           <View
             key={msg.id}
             style={[
               styles.burbuja,
-              item.esMio ? styles.burbujaMia : styles.burbujaOtra,
+              esMio ? styles.burbujaMia : styles.burbujaOtra,
             ]}
           >
             <Text style={styles.textoBurbuja}>{msg.mensaje}</Text>
@@ -248,7 +226,7 @@ export default function ChatScreen() {
           >
             <Ionicons name="arrow-back" size={24} color="white" />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>{nombreDestinatario}</Text>
+          <Text style={styles.headerTitle}>{redNombre.toUpperCase()}</Text>
           <View style={{ width: 24 }} />
         </View>
 
@@ -266,7 +244,7 @@ export default function ChatScreen() {
           ref={flatListRef}
           data={grupos}
           renderItem={renderItem}
-          keyExtractor={(item) => `grupo-${item.esMio}-${item.mensajes[0].id}`}
+          keyExtractor={(item) => `grupo-${item.nombre}-${item.mensajes[0].id}`}
           contentContainerStyle={styles.listaMensajes}
           onContentSizeChange={() =>
             flatListRef.current?.scrollToEnd({ animated: true })
@@ -301,21 +279,6 @@ export default function ChatScreen() {
             )}
           </TouchableOpacity>
         </View>
-        {/* Toast de confirmación */}
-        {mostrarToast && (
-          <View style={styles.toast}>
-            <Ionicons name="checkmark-circle" size={20} color="#10B981" />
-            <Text style={styles.toastText}>Mensaje enviado</Text>
-          </View>
-        )}
-        {mostrarNotificacion && (
-          <View style={styles.notificacion}>
-            <Ionicons name="chatbubble" size={20} color="#10B981" />
-            <Text style={styles.notificacionText}>
-              Nuevo mensaje de {nuevoMensajeDe}
-            </Text>
-          </View>
-        )}
       </SafeAreaView>
     </KeyboardAvoidingView>
   );
@@ -355,9 +318,17 @@ const styles = StyleSheet.create({
   },
   fechaText: { color: "#94A3B8", fontSize: 12 },
 
+  keyboardView: { flex: 1 },
   listaMensajes: { padding: 15, flexGrow: 1, justifyContent: "flex-end" },
 
   grupoMensaje: { marginBottom: 12 },
+  nombreRemitente: {
+    color: "#94A3B8",
+    fontSize: 12,
+    marginBottom: 4,
+    marginLeft: 4,
+    fontWeight: "600",
+  },
 
   burbuja: {
     maxWidth: "75%",
@@ -408,49 +379,4 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   btnEnviarDisabled: { opacity: 0.5 },
-  toast: {
-    position: "absolute",
-    bottom: 100,
-    alignSelf: "center",
-    backgroundColor: "#1E293B",
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderRadius: 25,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
-    gap: 8,
-  },
-  toastText: {
-    color: "white",
-    fontSize: 14,
-    fontWeight: "600",
-  },
-  notificacion: {
-    position: "absolute",
-    top: 80,
-    alignSelf: "center",
-    backgroundColor: "#1E293B",
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderRadius: 25,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
-    gap: 10,
-    zIndex: 1000,
-  },
-  notificacionText: {
-    color: "white",
-    fontSize: 14,
-    fontWeight: "600",
-  },
 });

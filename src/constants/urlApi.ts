@@ -1,7 +1,7 @@
 // src/constants/urlApi.ts
 
 // Configuración centralizada del backend
-const LOCAL_IP = "10.13.25.105"; // Mi IP actual (cambiar si tu router la asigna diferente)
+const LOCAL_IP = "192.168.1.10"; // Mi IP actual (cambiar si tu router la asigna diferente)
 const PORT = 5285;
 
 export const API_URL = __DEV__

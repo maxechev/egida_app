@@ -3,14 +3,14 @@ import { router, useLocalSearchParams } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import React, { useEffect, useState } from "react";
 import {
-    ActivityIndicator,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
-import { API_URL } from '../constants/urlApi';
+import { API_URL } from "../constants/urlApi";
 
 export default function DetalleAlertaScreen() {
   const { id } = useLocalSearchParams();
@@ -24,7 +24,6 @@ export default function DetalleAlertaScreen() {
         const token = await SecureStore.getItemAsync("token");
         if (!token) return;
 
-        // 1. Obtener la alerta
         const response = await fetch(`${API_URL}/Alerta/${id}`, {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -38,8 +37,7 @@ export default function DetalleAlertaScreen() {
 
         const data = await response.json();
 
-        // 2. Resolver nombre del usuario
-        let userName = "Usuario Anónimo";
+        let userName = "Oculto";
         try {
           const userResponse = await fetch(
             `${API_URL}/Usuario/${data.usuarioId}`,
@@ -51,18 +49,28 @@ export default function DetalleAlertaScreen() {
           );
           if (userResponse.ok) {
             const userData = await userResponse.json();
-            userName = `${userData.nombre} ${userData.apellido}`;
+
+            if (userData.nombre) {
+              userName = `${userData.nombre} ${userData.apellido}`;
+            } else if (userData.alias) {
+              userName = userData.alias;
+            } else {
+              userName = "Oculto";
+            }
           }
         } catch (e) {
           console.error("Error al cargar usuario:", e);
         }
 
-        // 3. Mapear a la estructura esperada por la UI
+        const fechaString = data.fecha.endsWith("Z")
+          ? data.fecha
+          : data.fecha + "Z";
+
         setAlerta({
           id: data.id,
           motivo: data.tipo,
           direccion: data.ubicacion || "Ubicación desconocida",
-          timestamp: new Date(data.fecha),
+          timestamp: new Date(fechaString),
           userName: userName,
           estado: data.estado,
         });
@@ -98,45 +106,41 @@ export default function DetalleAlertaScreen() {
       </View>
 
       <View style={styles.card}>
-        {/* Usuario */}
         <View style={styles.row}>
           <View style={styles.iconBox}>
             <Ionicons name="person-outline" size={20} color="#94A3B8" />
           </View>
-          <View>
+          <View style={{ flex: 1 }}>
             <Text style={styles.label}>USUARIO</Text>
             <Text style={styles.value}>{alerta.userName}</Text>
           </View>
         </View>
 
-        {/* Motivo */}
         <View style={styles.row}>
           <View style={styles.iconBox}>
             <Ionicons name="warning-outline" size={20} color="#94A3B8" />
           </View>
-          <View>
+          <View style={{ flex: 1 }}>
             <Text style={styles.label}>MOTIVO</Text>
             <Text style={styles.value}>{alerta.motivo}</Text>
           </View>
         </View>
 
-        {/* Ubicación */}
         <View style={styles.row}>
           <View style={styles.iconBox}>
             <Ionicons name="location-outline" size={20} color="#94A3B8" />
           </View>
-          <View>
+          <View style={{ flex: 1 }}>
             <Text style={styles.label}>UBICACIÓN</Text>
             <Text style={styles.value}>{alerta.direccion}</Text>
           </View>
         </View>
 
-        {/* Hora */}
         <View style={styles.row}>
           <View style={styles.iconBox}>
             <Ionicons name="time-outline" size={20} color="#94A3B8" />
           </View>
-          <View>
+          <View style={{ flex: 1 }}>
             <Text style={styles.label}>HORA</Text>
             <Text style={styles.value}>
               {alerta.timestamp.toLocaleTimeString("es-AR", {
@@ -147,7 +151,6 @@ export default function DetalleAlertaScreen() {
           </View>
         </View>
 
-        {/* Estado */}
         <View style={styles.row}>
           <View style={styles.iconBox}>
             <Ionicons
@@ -156,7 +159,7 @@ export default function DetalleAlertaScreen() {
               color="#94A3B8"
             />
           </View>
-          <View>
+          <View style={{ flex: 1 }}>
             <Text style={styles.label}>ESTADO</Text>
             <View
               style={[
@@ -209,7 +212,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#1E293B",
   },
-  row: { flexDirection: "row", alignItems: "center", marginBottom: 24 },
+  row: { flexDirection: "row", alignItems: "flex-start", marginBottom: 24 },
   iconBox: {
     width: 40,
     height: 40,

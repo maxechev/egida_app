@@ -84,8 +84,27 @@ export default function AlertaScreen() {
 
       console.log(`✅ Alerta enviada: ${motivo} | 📍 ${direccionTexto}`);
       router.replace("/home");
+      // ... (código existente)
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.mensaje || "Error al enviar alerta");
+      }
+
+      console.log(`✅ Alerta enviada: ${motivo} | 📍 ${direccionTexto}`);
+
+      Alert.alert(
+        "¡Alerta Enviada!",
+        "Su alerta ha sido enviada exitosamente.",
+        [
+          {
+            text: "Entendido",
+            onPress: () => router.replace("/home"),
+          },
+        ],
+      );
     } catch (error: any) {
-      console.error("❌ Error:", error.message);
+      console.error(" Error:", error.message);
       Alert.alert("Error", error.message || "No se pudo enviar la alerta.");
     } finally {
       setIsLoading(false);

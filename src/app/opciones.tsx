@@ -1,12 +1,49 @@
+import { API_URL } from "@/src/constants/urlApi"; // ✅ Importar API_URL
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import * as SecureStore from "expo-secure-store";
-import { useState } from "react";
+import { useEffect, useState } from "react"; // ✅ Agregar useEffect
 import { Modal, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function OpcionesScreen() {
   const [mostrarModal, setMostrarModal] = useState(false);
+  const [mensajesNoLeidosRed, setMensajesNoLeidosRed] = useState(0);
+  const [mensajesNoLeidosPrivados, setMensajesNoLeidosPrivados] = useState(0);
+
+  useEffect(() => {
+    cargarMensajesNoLeidos();
+    const intervalo = setInterval(cargarMensajesNoLeidos, 5000); // Actualizar cada 5 seg
+    return () => clearInterval(intervalo);
+  }, []);
+
+  const cargarMensajesNoLeidos = async () => {
+    try {
+      const token = await SecureStore.getItemAsync("token");
+      const redActiva = await SecureStore.getItemAsync("redActivaId");
+
+      if (token && redActiva) {
+        const response = await fetch(
+          `${API_URL}/MensajeNoLeido/red/total/${redActiva}`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          },
+        );
+        const responsePriv = await fetch(
+          `${API_URL}/MensajeNoLeido/privados/total`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          },
+        );
+        if (responsePriv.ok) {
+          const dataPriv = await responsePriv.json();
+          setMensajesNoLeidosPrivados(dataPriv.total);
+        }
+      }
+    } catch (error) {
+      console.error("Error cargando mensajes no leídos:", error);
+    }
+  };
 
   const cerrarSesion = async () => {
     try {
@@ -83,13 +120,37 @@ export default function OpcionesScreen() {
 
         <TouchableOpacity
           style={styles.button}
-          onPress={() => router.push("/comunidad")}
+          onPress={() => {
+            router.push("/comunidad");
+          }}
         >
           <Text style={styles.text}>Comunidad</Text>
+          {mensajesNoLeidosPrivados > 0 && (
+            <View style={styles.badge}>
+              <Text style={styles.badgeText}>
+                {mensajesNoLeidosPrivados > 99
+                  ? "99+"
+                  : mensajesNoLeidosPrivados}
+              </Text>
+            </View>
+          )}
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.button}>
+        <TouchableOpacity
+          style={styles.button}
+          onPress={() => {
+            router.push("/chat_red");
+            setMensajesNoLeidosRed(0);
+          }}
+        >
           <Text style={styles.text}>Chat de la red</Text>
+          {mensajesNoLeidosRed > 0 && (
+            <View style={styles.badge}>
+              <Text style={styles.badgeText}>
+                {mensajesNoLeidosRed > 99 ? "99+" : mensajesNoLeidosRed}
+              </Text>
+            </View>
+          )}
         </TouchableOpacity>
       </View>
 
@@ -172,10 +233,28 @@ const styles = {
     height: 55,
     justifyContent: "center" as const,
     alignItems: "center" as const,
+    position: "relative" as const,
   },
   text: {
     fontWeight: "bold" as const,
     color: "#10172B",
     fontSize: 20,
+  },
+  badge: {
+    position: "absolute" as const,
+    top: -8,
+    right: -8,
+    backgroundColor: "#EF4444",
+    borderRadius: 12,
+    minWidth: 24,
+    height: 24,
+    justifyContent: "center" as const,
+    alignItems: "center" as const,
+    paddingHorizontal: 6,
+  },
+  badgeText: {
+    color: "white",
+    fontSize: 12,
+    fontWeight: "bold" as const,
   },
 };

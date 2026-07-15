@@ -1,57 +1,31 @@
 import { Picker } from "@react-native-picker/picker";
 import { router } from "expo-router";
 import * as SecureStore from "expo-secure-store";
-import { Accelerometer } from "expo-sensors";
 import { useEffect, useState } from "react";
 import {
-    ActivityIndicator,
-    SafeAreaView,
-    Switch,
-    Text,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  StyleSheet,
+  Switch,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
-import { API_URL } from '../constants/urlApi';
+import { SafeAreaView } from "react-native-safe-area-context";
+import { API_URL } from "../constants/urlApi"; // ⚠️ Verificá que esta ruta sea correcta
 
 export default function ConfigGestosScreen() {
-  const [loading, setLoading] = useState(true);
-  const [guardando, setGuardando] = useState(false);
-
+  // 1. Unificamos el estado en un solo objeto para manejarlo mejor
   const [config, setConfig] = useState({
-    notificacionesActivas: true,
-    vibracionNotificaciones: true,
-    tiposAlertaNotificacion: [] as string[],
     gestoApagadoActivo: true,
     confirmacionRapida: true,
     tipoAlertaGesto: "",
-    sonidosActivos: true,
-    vibracionSonido: true,
-    tipoSonido: "",
   });
+  const [guardando, setGuardando] = useState(false);
 
+  // 2. Cargamos la configuración apenas se abre la pantalla
   useEffect(() => {
     cargarConfiguracion();
   }, []);
-
-  // Listener del acelerómetro
-  useEffect(() => {
-    let subscription: any;
-
-    if (config.gestoApagadoActivo) {
-      Accelerometer.setUpdateInterval(100);
-      subscription = Accelerometer.addListener(({ x, y, z }) => {
-        const aceleracion = Math.sqrt(x * x + y * y + z * z);
-        if (aceleracion > 2.5) {
-          console.log("¡Gesto de alerta detectado!");
-          // Aquí podés navegar a la pantalla de alerta o mostrar un modal
-        }
-      });
-    }
-
-    return () => {
-      if (subscription) subscription.remove();
-    };
-  }, [config.gestoApagadoActivo]);
 
   const cargarConfiguracion = async () => {
     try {
@@ -68,101 +42,77 @@ export default function ConfigGestosScreen() {
       if (response.ok) {
         const data = await response.json();
         setConfig({
-          notificacionesActivas: data.notificacionesActivas ?? true,
-          vibracionNotificaciones: data.vibracionNotificaciones ?? true,
-          tiposAlertaNotificacion: data.tiposAlertaNotificacion || [],
           gestoApagadoActivo: data.gestoApagadoActivo ?? true,
           confirmacionRapida: data.confirmacionRapida ?? true,
-          tipoAlertaGesto: data.tipoAlertaGesto || "",
-          sonidosActivos: data.sonidosActivos ?? true,
-          vibracionSonido: data.vibracionSonido ?? true,
-          tipoSonido: data.tipoSonido || "",
+          tipoAlertaGesto: data.tipoAlertaGesto ?? "",
         });
       }
     } catch (error) {
-      console.error("Error al cargar configuración:", error);
-    } finally {
-      setLoading(false);
+      console.error("Error al cargar config. de gestos:", error);
     }
   };
 
+  // 3. Función para guardar en la base de datos cada vez que algo cambia
   const guardarConfiguracion = async (nuevaConfig: typeof config) => {
     try {
       setGuardando(true);
       const token = await SecureStore.getItemAsync("token");
       if (!token) return;
 
+      // Enviamos TODA la configuración. Los campos de otras pantallas se envían con valores por defecto
+      // para que el backend no los sobrescriba o falle por campos nulos.
       await fetch(`${API_URL}/Configuracion/actualizar`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(nuevaConfig),
+        body: JSON.stringify({
+          notificacionesActivas: true,
+          vibracionNotificaciones: true,
+          tiposAlertaNotificacion: [],
+          gestoApagadoActivo: nuevaConfig.gestoApagadoActivo,
+          confirmacionRapida: nuevaConfig.confirmacionRapida,
+          tipoAlertaGesto: nuevaConfig.tipoAlertaGesto,
+          sonidosActivos: true,
+          vibracionSonido: true,
+          tipoSonido: "",
+          mostrarNombre: true,
+          mostrarUbicacion: true,
+          mostrarContacto: true,
+        }),
       });
     } catch (error) {
-      console.error("Error al guardar:", error);
+      console.error("Error al guardar config. de gestos:", error);
     } finally {
       setGuardando(false);
     }
   };
 
-  const actualizarCampo = async (campo: string, valor: any) => {
+  // 4. Helper para actualizar el estado y guardar al mismo tiempo
+  const actualizarCampo = (campo: keyof typeof config, valor: any) => {
     const nuevaConfig = { ...config, [campo]: valor };
     setConfig(nuevaConfig);
     guardarConfiguracion(nuevaConfig);
-
-    // Pedir permisos si se activa el gesto
-    if (campo === "gestoApagadoActivo" && valor) {
-      await Accelerometer.requestPermissionsAsync();
-    }
   };
 
-  if (loading) {
-    return (
-      <View
-        style={{
-          flex: 1,
-          backgroundColor: "#10172B",
-          justifyContent: "center",
-          alignItems: "center",
-        }}
-      >
-        <ActivityIndicator size="large" color="#FF4444" />
-      </View>
-    );
-  }
-
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "#10172B" }}>
-      <TouchableOpacity
-        style={{ position: "absolute", top: 50, left: 20 }}
-        onPress={() => router.back()}
-      >
-        <Text style={{ color: "white", fontSize: 30 }}>←</Text>
+    <SafeAreaView style={styles.container}>
+      <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+        <Text style={styles.backIconText}>←</Text>
       </TouchableOpacity>
 
-      <Text
-        style={{
-          color: "white",
-          fontSize: 32,
-          fontWeight: "bold",
-          alignSelf: "center",
-          marginTop: 50,
-          marginBottom: 30,
-          textAlign: "center",
-        }}
-      >
-        Configuración{"\n"}de gestos
-      </Text>
+      <Text style={styles.title}>Configuración{"\n"}de gestos</Text>
 
       <View style={styles.section}>
         <Text style={styles.description}>
-          Al sacudir el teléfono, se activará el modo de alertas.
+          Al apretar 3 veces seguidas el botón de apagado, el teléfono entrará
+          en modo de alertas, y dependiendo de cuantas veces se apriete el botón
+          de subir volumen, enviará un tipo de alerta.
         </Text>
 
         <View style={styles.row}>
-          <Text style={styles.title}>Gesto de alerta</Text>
+          <Text style={styles.label}>Botón de apagado</Text>
           <Switch
             value={config.gestoApagadoActivo}
             onValueChange={(val) => actualizarCampo("gestoApagadoActivo", val)}
@@ -172,12 +122,13 @@ export default function ConfigGestosScreen() {
 
       <View style={styles.section}>
         <Text style={styles.description}>
-          Cuando hagas un gesto de alerta, la alerta será enviada
-          automáticamente con el tipo elegido.
+          Cuando hagas un gesto de alerta, la alerta será configurada
+          automáticamente y luego enviada con el tipo de alerta elegido en las
+          configuraciones.
         </Text>
 
         <View style={styles.row}>
-          <Text style={styles.title}>Confirmación rápida</Text>
+          <Text style={styles.label}>Confirmación rápida</Text>
           <Switch
             value={config.confirmacionRapida}
             onValueChange={(val) => actualizarCampo("confirmacionRapida", val)}
@@ -185,43 +136,44 @@ export default function ConfigGestosScreen() {
         </View>
       </View>
 
+      {/* Picker con fondo oscuro y texto blanco */}
       <View style={styles.pickerContainer}>
         <Picker
           selectedValue={config.tipoAlertaGesto}
           onValueChange={(itemValue) =>
             actualizarCampo("tipoAlertaGesto", itemValue)
           }
+          style={{ color: "black" }}
         >
-          <Picker.Item label="Tipo de alerta rápida" value="" />
-          <Picker.Item label="Robo" value="Robo" />
+          <Picker.Item label="Tipo de alerta rápida" value="" color="black" />
+          <Picker.Item label="Robo" value="Robo" color="black" />
           <Picker.Item
             label="Secuestro de vehículo"
             value="Secuestro de vehículo"
+            color="black"
           />
-          <Picker.Item label="Hallanamiento" value="Hallanamiento" />
-          <Picker.Item label="Secuestro" value="Secuestro" />
+          <Picker.Item
+            label="Allanamiento"
+            value="Allanamiento"
+            color="black"
+          />
+          <Picker.Item label="Secuestro" value="Secuestro" color="black" />
           <Picker.Item
             label="Actividad sospechosa"
             value="Actividad sospechosa"
+            color="black"
           />
           <Picker.Item
             label="Disparos de arma de fuego"
             value="Disparos de arma de fuego"
+            color="black"
           />
         </Picker>
       </View>
 
+      {/* Indicador visual de que se está guardando */}
       {guardando && (
-        <View
-          style={{
-            position: "absolute",
-            bottom: 20,
-            right: 20,
-            backgroundColor: "#1E293B",
-            padding: 10,
-            borderRadius: 8,
-          }}
-        >
+        <View style={styles.loadingOverlay}>
           <ActivityIndicator size="small" color="white" />
         </View>
       )}
@@ -229,11 +181,34 @@ export default function ConfigGestosScreen() {
   );
 }
 
-const styles = {
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "#10172B",
+  },
+  backButton: {
+    position: "absolute",
+    top: 50,
+    left: 20,
+    zIndex: 10,
+  },
+  backIconText: {
+    color: "white",
+    fontSize: 30,
+  },
+  title: {
+    color: "white",
+    fontSize: 32,
+    fontWeight: "bold",
+    alignSelf: "center",
+    marginTop: 50,
+    marginBottom: 30,
+    textAlign: "center",
+  },
   section: {
     borderTopWidth: 1,
     borderColor: "#666",
-    padding: 20,
+    padding: 12,
   },
   description: {
     color: "white",
@@ -241,20 +216,28 @@ const styles = {
     marginBottom: 10,
   },
   row: {
-    flexDirection: "row" as const,
-    justifyContent: "space-between" as const,
-    alignItems: "center" as const,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
   },
-  title: {
+  label: {
     color: "white",
     fontSize: 18,
-    fontWeight: "bold" as const,
+    fontWeight: "bold",
   },
   pickerContainer: {
-    backgroundColor: "white",
+    backgroundColor: "#F0F0F2",
     width: 250,
-    alignSelf: "center" as const,
+    alignSelf: "center",
     marginTop: 20,
     borderRadius: 8,
   },
-};
+  loadingOverlay: {
+    position: "absolute",
+    bottom: 20,
+    right: 20,
+    backgroundColor: "#1E293B",
+    padding: 10,
+    borderRadius: 8,
+  },
+});

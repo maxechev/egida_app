@@ -6,28 +6,31 @@ import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   SafeAreaView,
+  StyleSheet,
   Switch,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
-
-const API_URL = "http://${API_URL}:5285/api";
+import { API_URL } from "../constants/urlApi";
 
 export default function ConfigSonidosScreen() {
   const [loading, setLoading] = useState(true);
   const [guardando, setGuardando] = useState(false);
 
   const [config, setConfig] = useState({
+    sonidosActivos: true,
+    vibracionSonido: true,
+    tipoSonido: "",
     notificacionesActivas: true,
     vibracionNotificaciones: true,
     tiposAlertaNotificacion: [] as string[],
     gestoApagadoActivo: true,
     confirmacionRapida: true,
     tipoAlertaGesto: "",
-    sonidosActivos: true,
-    vibracionSonido: true,
-    tipoSonido: "",
+    mostrarNombre: true,
+    mostrarUbicacion: true,
+    mostrarContacto: true,
   });
 
   useEffect(() => {
@@ -49,19 +52,24 @@ export default function ConfigSonidosScreen() {
       if (response.ok) {
         const data = await response.json();
         setConfig({
-          notificacionesActivas: data.notificacionesActivas ?? true,
-          vibracionNotificaciones: data.vibracionNotificaciones ?? true,
-          tiposAlertaNotificacion: data.tiposAlertaNotificacion || [],
-          gestoApagadoActivo: data.gestoApagadoActivo ?? true,
-          confirmacionRapida: data.confirmacionRapida ?? true,
-          tipoAlertaGesto: data.tipoAlertaGesto || "",
           sonidosActivos: data.sonidosActivos ?? true,
           vibracionSonido: data.vibracionSonido ?? true,
-          tipoSonido: data.tipoSonido || "",
+          tipoSonido: data.tipoSonido ?? "",
+          notificacionesActivas: data.notificacionesActivas ?? true,
+          vibracionNotificaciones: data.vibracionNotificaciones ?? true,
+          tiposAlertaNotificacion: data.tiposAlertaNotificacion
+            ? data.tiposAlertaNotificacion.split(",")
+            : [],
+          gestoApagadoActivo: data.gestoApagadoActivo ?? true,
+          confirmacionRapida: data.confirmacionRapida ?? true,
+          tipoAlertaGesto: data.tipoAlertaGesto ?? "",
+          mostrarNombre: data.mostrarNombre ?? true,
+          mostrarUbicacion: data.mostrarUbicacion ?? true,
+          mostrarContacto: data.mostrarContacto ?? true,
         });
       }
     } catch (error) {
-      console.error("Error al cargar configuración:", error);
+      console.error("Error al cargar configuración de sonidos:", error);
     } finally {
       setLoading(false);
     }
@@ -82,20 +90,18 @@ export default function ConfigSonidosScreen() {
         body: JSON.stringify(nuevaConfig),
       });
     } catch (error) {
-      console.error("Error al guardar:", error);
+      console.error("Error al guardar configuración de sonidos:", error);
     } finally {
       setGuardando(false);
     }
   };
 
-  const actualizarCampo = (campo: string, valor: any) => {
+  const actualizarCampo = (campo: keyof typeof config, valor: any) => {
     const nuevaConfig = { ...config, [campo]: valor };
     setConfig(nuevaConfig);
     guardarConfiguracion(nuevaConfig);
   };
 
-  // Reproducir sonido de prueba
-  // Mapeo estático de los sonidos (React Native necesita saber las rutas al compilar)
   const sonidosMap: Record<string, any> = {
     Sirena: require("../../assets/sonidos/Sirena.mp3"),
     "Alarma de android": require("../../assets/sonidos/Alarma de android.mp3"),
@@ -123,51 +129,29 @@ export default function ConfigSonidosScreen() {
 
   if (loading) {
     return (
-      <View
-        style={{
-          flex: 1,
-          backgroundColor: "#10172B",
-          justifyContent: "center",
-          alignItems: "center",
-        }}
-      >
+      <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#FF4444" />
       </View>
     );
   }
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "#10172B" }}>
-      <TouchableOpacity
-        style={{ position: "absolute", top: 50, left: 20 }}
-        onPress={() => router.back()}
-      >
-        <Text style={{ color: "white", fontSize: 30 }}>←</Text>
+    <SafeAreaView style={styles.container}>
+      <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+        <Text style={styles.backIconText}>←</Text>
       </TouchableOpacity>
 
-      <Text
-        style={{
-          color: "white",
-          fontSize: 32,
-          fontWeight: "bold",
-          alignSelf: "center",
-          marginTop: 50,
-          marginBottom: 30,
-          textAlign: "center",
-        }}
-      >
-        Configuración{"\n"}de sonidos
-      </Text>
+      <Text style={styles.title}>Configuración{"\n"}de sonidos</Text>
 
       <View style={styles.section}>
         <Text style={styles.description}>
-          Atención: si desactivas esta opción, seguirás recibiendo
-          notificaciones solo que el teléfono ya no emitirá ningún sonido al
-          mostrarlo
+          Atención: si desactivás esta opción, seguirás recibiendo
+          notificaciones, solo que el teléfono ya no emitirá ningún sonido al
+          mostrarlas.
         </Text>
 
         <View style={styles.row}>
-          <Text style={styles.title}>Activar/Desactivar</Text>
+          <Text style={styles.label}>Activar/Desactivar</Text>
           <Switch
             value={config.sonidosActivos}
             onValueChange={(val) => actualizarCampo("sonidosActivos", val)}
@@ -175,15 +159,14 @@ export default function ConfigSonidosScreen() {
         </View>
       </View>
 
-      <View style={styles.card}>
-        <Text style={styles.title}>Vibración</Text>
+      <View style={styles.section}>
         <Text style={styles.description}>
-          Atención: si desactivas esta opción, seguirás recibiendo
-          notificaciones solo que sin que el teléfono vibre al mostrarlo
+          Atención: si desactivás esta opción, seguirás recibiendo
+          notificaciones, solo que sin que el teléfono vibre al mostrarlas.
         </Text>
 
         <View style={styles.row}>
-          <Text style={styles.switchText}>Activar/Desactivar</Text>
+          <Text style={styles.label}>Vibración</Text>
           <Switch
             value={config.vibracionSonido}
             onValueChange={(val) => actualizarCampo("vibracionSonido", val)}
@@ -198,28 +181,24 @@ export default function ConfigSonidosScreen() {
             actualizarCampo("tipoSonido", itemValue);
             if (itemValue) reproducirSonido(itemValue);
           }}
+          style={{ color: "black" }}
         >
-          <Picker.Item label="Tipo de sonido" value="" />
-          <Picker.Item label="Sirena" value="Sirena" />
-          <Picker.Item label="Alarma de android" value="Alarma de android" />
-          <Picker.Item label="Sonido 3" value="Sonido 3" />
-          <Picker.Item label="Sonido 4" value="Sonido 4" />
-          <Picker.Item label="Sonido 5" value="Sonido 5" />
-          <Picker.Item label="Sonido 6" value="Sonido 6" />
+          <Picker.Item label="Tipo de sonido" value="" color="black" />
+          <Picker.Item label="Sirena" value="Sirena" color="black" />
+          <Picker.Item
+            label="Alarma de android"
+            value="Alarma de android"
+            color="black"
+          />
+          <Picker.Item label="Sonido 3" value="Sonido 3" color="black" />
+          <Picker.Item label="Sonido 4" value="Sonido 4" color="black" />
+          <Picker.Item label="Sonido 5" value="Sonido 5" color="black" />
+          <Picker.Item label="Sonido 6" value="Sonido 6" color="black" />
         </Picker>
       </View>
 
       {guardando && (
-        <View
-          style={{
-            position: "absolute",
-            bottom: 20,
-            right: 20,
-            backgroundColor: "#1E293B",
-            padding: 10,
-            borderRadius: 8,
-          }}
-        >
+        <View style={styles.loadingOverlay}>
           <ActivityIndicator size="small" color="white" />
         </View>
       )}
@@ -227,17 +206,24 @@ export default function ConfigSonidosScreen() {
   );
 }
 
-const styles = {
-  card: {
-    borderTopWidth: 1,
-    borderColor: "#6B7280",
-    paddingHorizontal: 20,
-    paddingVertical: 12,
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: "#10172B" },
+  loadingContainer: {
+    flex: 1,
+    backgroundColor: "#10172B",
+    justifyContent: "center",
+    alignItems: "center",
   },
-  switchText: {
+  backButton: { position: "absolute", top: 50, left: 20, zIndex: 10 },
+  backIconText: { color: "white", fontSize: 30 },
+  title: {
     color: "white",
-    fontSize: 18,
-    fontWeight: "bold" as const,
+    fontSize: 32,
+    fontWeight: "bold",
+    alignSelf: "center",
+    marginTop: 50,
+    marginBottom: 30,
+    textAlign: "center",
   },
   section: {
     borderTopWidth: 1,
@@ -250,20 +236,28 @@ const styles = {
     marginBottom: 10,
   },
   row: {
-    flexDirection: "row" as const,
-    justifyContent: "space-between" as const,
-    alignItems: "center" as const,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
   },
-  title: {
+  label: {
     color: "white",
     fontSize: 18,
-    fontWeight: "bold" as const,
+    fontWeight: "bold",
   },
   pickerContainer: {
-    backgroundColor: "white",
+    backgroundColor: "#F0F0F2",
     width: 250,
-    alignSelf: "center" as const,
+    alignSelf: "center",
     marginTop: 20,
     borderRadius: 8,
   },
-};
+  loadingOverlay: {
+    position: "absolute",
+    bottom: 20,
+    right: 20,
+    backgroundColor: "#1E293B",
+    padding: 10,
+    borderRadius: 8,
+  },
+});

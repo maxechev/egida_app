@@ -26,10 +26,6 @@ interface AlertaHistorial {
 export default function HistorialAlertasScreen() {
   const [alertas, setAlertas] = useState<AlertaHistorial[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filtro, setFiltro] = useState<"Todas" | "En proceso" | "Finalizado">(
-    "Todas",
-  );
-  // 1. Obtener tu ID actual al cargar la pantalla
   const [miUsuarioId, setMiUsuarioId] = useState<number | null>(null);
 
   useEffect(() => {
@@ -50,7 +46,6 @@ export default function HistorialAlertasScreen() {
     cargarAlertas();
   }, []);
 
-  // 2. Función para eliminar
   const eliminarAlerta = async (id: number) => {
     Alert.alert(
       "Eliminar Alerta",
@@ -71,7 +66,6 @@ export default function HistorialAlertasScreen() {
               });
 
               if (response.ok) {
-                // Recargar la lista para que desaparezca
                 cargarAlertas();
               } else {
                 const data = await response.json();
@@ -90,10 +84,6 @@ export default function HistorialAlertasScreen() {
     );
   };
 
-  useEffect(() => {
-    cargarAlertas();
-  }, [filtro]);
-
   const cargarAlertas = async () => {
     setLoading(true);
     try {
@@ -102,11 +92,8 @@ export default function HistorialAlertasScreen() {
 
       if (!token || !redActiva) return;
 
-      // Construir URL con filtro de red y estado
-      let url = `${API_URL}/Alerta?redId=${redActiva}`;
-      if (filtro !== "Todas") {
-        url += `&estado=${encodeURIComponent(filtro)}`;
-      }
+      // ✅ URL simplificada: solo filtramos por red activa
+      const url = `${API_URL}/Alerta?redId=${redActiva}`;
 
       const response = await fetch(url, {
         headers: {
@@ -121,7 +108,6 @@ export default function HistorialAlertasScreen() {
 
       const data = await response.json();
 
-      // Resolver nombres de usuarios en paralelo
       const promesas = data.map(async (alerta: any) => {
         let userName = "Usuario Anónimo";
         if (alerta.usuarioId) {
@@ -129,25 +115,31 @@ export default function HistorialAlertasScreen() {
             const userResponse = await fetch(
               `${API_URL}/Usuario/${alerta.usuarioId}`,
               {
-                headers: {
-                  Authorization: `Bearer ${token}`,
-                },
+                headers: { Authorization: `Bearer ${token}` },
               },
             );
             if (userResponse.ok) {
               const userData = await userResponse.json();
-              userName = `${userData.nombre} ${userData.apellido}`;
+              if (userData.nombre) {
+                userName = `${userData.nombre} ${userData.apellido}`;
+              } else if (userData.alias) {
+                userName = userData.alias;
+              }
             }
           } catch (e) {
             console.error("Error resolviendo usuario:", e);
           }
         }
 
+        const fechaString = alerta.fecha.endsWith("Z")
+          ? alerta.fecha
+          : alerta.fecha + "Z";
+
         return {
           id: alerta.id.toString(),
           motivo: alerta.tipo,
           direccion: alerta.ubicacion || "Dirección no disponible",
-          timestamp: new Date(alerta.fecha),
+          timestamp: new Date(fechaString),
           estado: alerta.estado || "Desconocido",
           userName: userName,
           usuarioId: alerta.usuarioId,
@@ -164,7 +156,6 @@ export default function HistorialAlertasScreen() {
   };
 
   const renderItem = ({ item }: { item: AlertaHistorial }) => {
-    // 1. Verificamos si esta alerta es mía
     const esMia = item.usuarioId === miUsuarioId;
 
     return (
@@ -174,18 +165,10 @@ export default function HistorialAlertasScreen() {
           router.push({ pathname: "/detalle_alerta", params: { id: item.id } })
         }
       >
-        <View
-          style={[
-            styles.indicator,
-            {
-              backgroundColor:
-                item.estado === "En proceso" ? "#EF4444" : "#64748B",
-            },
-          ]}
-        />
+        {/* ✅ Indicador de color fijo (rojo de alerta) */}
+        <View style={[styles.indicator, { backgroundColor: "#EF4444" }]} />
 
         <View style={styles.content}>
-          {/* 2. Fila superior: Hora a la izquierda, Basura a la derecha (si es mía) */}
           <View style={styles.rowHeader}>
             <Text style={styles.hora}>
               {item.timestamp.toLocaleTimeString("es-AR", {
@@ -197,7 +180,7 @@ export default function HistorialAlertasScreen() {
             {esMia && (
               <TouchableOpacity
                 onPress={(e) => {
-                  e.stopPropagation(); // 3. ¡CRUCIAL! Evita que se abra el detalle al tocar la basura
+                  e.stopPropagation();
                   eliminarAlerta(Number(item.id));
                 }}
                 style={styles.btnEliminar}
@@ -210,15 +193,7 @@ export default function HistorialAlertasScreen() {
           <Text style={styles.ubicacion} numberOfLines={1}>
             {item.direccion}
           </Text>
-          <Text
-            style={[
-              styles.motivo,
-              {
-                color: item.estado === "En proceso" ? "#EF4444" : "#94A3B8",
-                fontSize: 12,
-              },
-            ]}
-          >
+          <Text style={styles.motivo}>
             {item.motivo} • {item.userName}
           </Text>
         </View>
@@ -243,21 +218,7 @@ export default function HistorialAlertasScreen() {
         <Text style={styles.title}>Historial de alertas</Text>
       </View>
 
-      <View style={styles.filtros}>
-        {["Todas", "En proceso", "Finalizado"].map((f) => (
-          <TouchableOpacity
-            key={f}
-            style={[styles.filtroBtn, filtro === f && styles.filtroActivo]}
-            onPress={() => setFiltro(f as any)}
-          >
-            <Text
-              style={[styles.filtroTxt, filtro === f && styles.filtroTxtActivo]}
-            >
-              {f}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
+      {/* ✅ Se eliminó la barra de filtros */}
 
       <FlatList
         data={alertas}
@@ -265,6 +226,11 @@ export default function HistorialAlertasScreen() {
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.list}
         showsVerticalScrollIndicator={false}
+        ListEmptyComponent={
+          <Text style={styles.emptyText}>
+            No hay alertas registradas en esta red.
+          </Text>
+        }
       />
     </View>
   );
@@ -278,6 +244,23 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 20,
+    paddingTop: 60,
+  },
+  backBtn: { color: "#FFF", fontSize: 24, marginRight: 15 },
+  title: { color: "#FFF", fontSize: 22, fontWeight: "bold" },
+
+  list: { paddingHorizontal: 20, paddingBottom: 40 },
+  emptyText: {
+    color: "#94A3B8",
+    textAlign: "center",
+    marginTop: 40,
+    fontSize: 16,
+  },
+
   rowHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -289,32 +272,7 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(255, 68, 68, 0.1)",
     borderRadius: 6,
   },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    padding: 20,
-    paddingTop: 60,
-  },
-  backBtn: { color: "#FFF", fontSize: 24, marginRight: 15 },
-  title: { color: "#FFF", fontSize: 22, fontWeight: "bold" },
 
-  filtros: {
-    flexDirection: "row",
-    paddingHorizontal: 20,
-    marginBottom: 15,
-    gap: 10,
-  },
-  filtroBtn: {
-    paddingHorizontal: 15,
-    paddingVertical: 8,
-    borderRadius: 20,
-    backgroundColor: "#1E293B",
-  },
-  filtroActivo: { backgroundColor: "#EF4444" },
-  filtroTxt: { color: "#94A3B8", fontSize: 12, fontWeight: "600" },
-  filtroTxtActivo: { color: "#FFF" },
-
-  list: { paddingHorizontal: 20, paddingBottom: 40 },
   card: {
     flexDirection: "row",
     backgroundColor: "#111C33",
@@ -324,12 +282,12 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#1E293B",
   },
-  indicator: { width: 6, backgroundColor: "#EF4444" },
+  indicator: { width: 6 }, // ✅ El color se define inline
   content: { flex: 1, padding: 16 },
   hora: { color: "#FFF", fontSize: 18, fontWeight: "bold", marginBottom: 4 },
   ubicacion: { color: "#94A3B8", fontSize: 14, marginBottom: 6 },
   motivo: {
-    color: "#EF4444",
+    color: "#EF4444", // ✅ Color fijo de alerta
     fontSize: 13,
     fontWeight: "600",
     textTransform: "uppercase",

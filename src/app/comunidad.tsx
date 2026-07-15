@@ -1,3 +1,4 @@
+import { API_URL } from "@/src/constants/urlApi";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import * as SecureStore from "expo-secure-store";
@@ -11,14 +12,13 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { API_URL } from '../constants/urlApi';
 
 interface UsuarioComunidad {
   id: number;
-  nombre: string;
-  apellido: string;
+  nombre: string | null; // ✅ Ahora puede ser null por privacidad
+  apellido: string | null;
   correo: string;
-  contacto: string;
+  contacto: string | null;
   alias: string | null;
   fotoPerfil: string | null;
   edad: number;
@@ -29,6 +29,9 @@ export default function ComunidadScreen() {
   const [usuariosFiltrados, setUsuariosFiltrados] = useState<
     UsuarioComunidad[]
   >([]);
+  const [mensajesNoLeidosPorUsuario, setMensajesNoLeidosPorUsuario] = useState<
+    Record<number, number>
+  >({});
   const [loading, setLoading] = useState(true);
   const [filtro, setFiltro] = useState("");
   const [mostrarFiltro, setMostrarFiltro] = useState(false);
@@ -38,11 +41,40 @@ export default function ComunidadScreen() {
   }, []);
 
   useEffect(() => {
+    cargarMensajesNoLeidos();
+    const intervalo = setInterval(cargarMensajesNoLeidos, 5000);
+    return () => clearInterval(intervalo);
+  }, []);
+
+  const cargarMensajesNoLeidos = async () => {
+    try {
+      const token = await SecureStore.getItemAsync("token");
+      const response = await fetch(
+        `${API_URL}/MensajeNoLeido/privados/por-usuario`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      );
+      if (response.ok) {
+        const data = await response.json();
+        const conteos: Record<number, number> = {};
+        data.forEach((item: any) => {
+          conteos[item.usuarioId] = item.noLeidos;
+        });
+        setMensajesNoLeidosPorUsuario(conteos);
+      }
+    } catch (error) {
+      console.error("Error cargando mensajes no leídos:", error);
+    }
+  };
+
+  useEffect(() => {
     if (filtro) {
       const filtrados = usuarios.filter(
         (u) =>
-          u.nombre.toLowerCase().includes(filtro.toLowerCase()) ||
-          u.apellido.toLowerCase().includes(filtro.toLowerCase()) ||
+          (u.nombre && u.nombre.toLowerCase().includes(filtro.toLowerCase())) ||
+          (u.apellido &&
+            u.apellido.toLowerCase().includes(filtro.toLowerCase())) ||
           (u.alias && u.alias.toLowerCase().includes(filtro.toLowerCase())),
       );
       setUsuariosFiltrados(filtrados);
@@ -82,49 +114,88 @@ export default function ComunidadScreen() {
     }
   };
 
-  const renderItem = ({ item }: { item: UsuarioComunidad }) => (
-    <TouchableOpacity
-      style={styles.usuarioCard}
-      onPress={() =>
-        router.push({
-          pathname: "/perfil_usuario",
-          params: {
-            id: item.id,
-            nombre: item.nombre,
-            apellido: item.apellido,
-            alias: item.alias || "",
-            correo: item.correo,
-            contacto: item.contacto,
-          },
-        })
-      }
-    >
-      <View style={styles.avatar}>
-        <Text style={styles.avatarText}>
-          {item.nombre.charAt(0).toUpperCase()}
-        </Text>
-      </View>
-      <View style={styles.usuarioInfo}>
-        <Text style={styles.usuarioNombre}>
-          {item.alias || `${item.nombre} ${item.apellido}`}
-        </Text>
-      </View>
+  const renderItem = ({ item }: { item: UsuarioComunidad }) => {
+    const noLeidos = mensajesNoLeidosPorUsuario[item.id] || 0;
+
+    const inicial = item.nombre
+      ? item.nombre.charAt(0).toUpperCase()
+      : item.alias
+        ? item.alias.charAt(0).toUpperCase()
+        : "U";
+
+    // ✅ Nombre a mostrar: prioriza el alias, si no hay, usa nombre+apellido, si no, "Usuario Anónimo"
+    const nombreMostrar =
+      item.alias ||
+      (item.nombre ? `${item.nombre} ${item.apellido}` : "Usuario Anónimo");
+
+    return (
       <TouchableOpacity
-        style={styles.btnMensaje}
-        onPress={() =>
+        style={styles.usuarioCard}
+        onPress={() => {
           router.push({
-            pathname: "/chat",
+            pathname: "/perfil_usuario",
             params: {
-              usuarioId: item.id,
-              nombre: item.alias || `${item.nombre} ${item.apellido}`,
+              id: item.id,
+              nombre: item.nombre || "Usuario",
+              apellido: item.apellido || "Anónimo",
+              alias: item.alias || "",
+              correo: item.correo,
+              contacto: item.contacto || "Oculto",
             },
-          })
-        }
+          });
+          marcarComoLeido(item.id);
+        }}
       >
-        <Ionicons name="chatbubble-outline" size={20} color="#94A3B8" />
+        <View style={styles.avatar}>
+          <Text style={styles.avatarText}>{inicial}</Text>
+        </View>
+        <View style={styles.usuarioInfo}>
+          <Text style={styles.usuarioNombre}>{nombreMostrar}</Text>
+        </View>
+
+        {/* ✅ Badge de mensajes no leídos */}
+        {noLeidos > 0 && (
+          <View style={styles.badgeUsuario}>
+            <Text style={styles.badgeUsuarioText}>
+              {noLeidos > 9 ? "9+" : noLeidos}
+            </Text>
+          </View>
+        )}
+        <TouchableOpacity
+          style={styles.btnMensaje}
+          onPress={() => {
+            router.push({
+              pathname: "/chat",
+              params: {
+                usuarioId: item.id,
+                nombre: nombreMostrar,
+              },
+            });
+            marcarComoLeido(item.id);
+          }}
+        >
+          <Ionicons name="chatbubble-outline" size={20} color="#94A3B8" />
+        </TouchableOpacity>
       </TouchableOpacity>
-    </TouchableOpacity>
-  );
+    );
+  };
+
+  const marcarComoLeido = async (usuarioId: number) => {
+    try {
+      const token = await SecureStore.getItemAsync("token");
+      await fetch(
+        `${API_URL}/MensajeNoLeido/privados/marcar-leido/${usuarioId}`,
+        {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      );
+      // Recargar conteos
+      cargarMensajesNoLeidos();
+    } catch (error) {
+      console.error("Error marcando como leído:", error);
+    }
+  };
 
   if (loading) {
     return (
@@ -242,5 +313,20 @@ const styles = StyleSheet.create({
   },
   btnMensaje: {
     padding: 10,
+  },
+  badgeUsuario: {
+    backgroundColor: "#EF4444",
+    borderRadius: 10,
+    minWidth: 20,
+    height: 20,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 6,
+    marginRight: 10,
+  },
+  badgeUsuarioText: {
+    color: "white",
+    fontSize: 11,
+    fontWeight: "bold",
   },
 });

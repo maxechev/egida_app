@@ -24,7 +24,7 @@ export default function EmergenciaScreen() {
 
   // Estado del formulario
   const [nombre, setNombre] = useState("");
-  const [telefono, setTelefono] = useState("");
+  const [aliasUsuario, setAliasUsuario] = useState("");
   const [accion, setAccion] = useState("notificacion");
   const [guardando, setGuardando] = useState(false);
 
@@ -53,8 +53,8 @@ export default function EmergenciaScreen() {
   };
 
   const handleAgregar = async () => {
-    if (!nombre || !telefono) {
-      Alert.alert("Error", "Nombre y teléfono son obligatorios.");
+    if (!nombre || !aliasUsuario) {
+      Alert.alert("Error", "Nombre y alias son obligatorios.");
       return;
     }
 
@@ -67,13 +67,13 @@ export default function EmergenciaScreen() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ nombre, telefono, accion }),
+        body: JSON.stringify({ nombre, aliasUsuario, accion }),
       });
 
       if (response.ok) {
         setModalVisible(false);
         setNombre("");
-        setTelefono("");
+        setAliasUsuario("");
         setAccion("notificacion");
         cargarContactos(); // Recargar la lista
       } else {
@@ -116,11 +116,11 @@ export default function EmergenciaScreen() {
       </View>
       <View style={styles.info}>
         <Text style={styles.nombre}>{item.nombre}</Text>
-        <Text style={styles.telefono}>{item.telefono}</Text>
+        <Text style={styles.aliasUsuario}>{item.aliasUsuario}</Text>
         <Text style={styles.accionText}>
           Acción:{" "}
           {item.accion === "whatsapp"
-            ? "Enviar WhatsApp 📱"
+            ? "Enviar mensaje 📱"
             : item.accion === "notificacion"
               ? "Notificación Push 🔔"
               : "Hacer vibrar 📳"}
@@ -180,30 +180,40 @@ export default function EmergenciaScreen() {
             <TextInput
               style={styles.input}
               placeholder="Nombre completo"
-              placeholderTextColor="#999"
+              placeholderTextColor="#94A3B8"
               value={nombre}
               onChangeText={setNombre}
             />
             <TextInput
               style={styles.input}
-              placeholder="Teléfono (ej: 3624123456)"
-              placeholderTextColor="#999"
-              keyboardType="phone-pad"
-              value={telefono}
-              onChangeText={setTelefono}
+              placeholder="Alias del usuario (ej: lucasf)"
+              placeholderTextColor="#94A3B8"
+              value={aliasUsuario}
+              onChangeText={setAliasUsuario}
+              autoCapitalize="none" // ✅ Importante para que no ponga mayúscula automática
             />
 
             <View style={styles.pickerContainer}>
               <Picker
                 selectedValue={accion}
                 onValueChange={(itemValue) => setAccion(itemValue)}
+                style={{ color: "#94A3B8" }}
               >
                 <Picker.Item
                   label="Enviar Notificación Push"
                   value="notificacion"
+                  color="black"
                 />
-                <Picker.Item label="Enviar WhatsApp" value="whatsapp" />
-                <Picker.Item label="Hacer vibrar teléfono" value="vibrar" />
+                <Picker.Item
+                  label="Enviar mensaje"
+                  value="whatsapp"
+                  color="black"
+                />
+                <Picker.Item
+                  label="Hacer vibrar teléfono"
+                  value="vibrar"
+                  color="black"
+                />
               </Picker>
             </View>
 
@@ -277,7 +287,7 @@ const styles = StyleSheet.create({
   },
   info: { flex: 1 },
   nombre: { color: "white", fontSize: 16, fontWeight: "bold" },
-  telefono: { color: "#94A3B8", fontSize: 14, marginTop: 2 },
+  aliasUsuario: { color: "#94A3B8", fontSize: 14, marginTop: 2 },
   accionText: {
     color: "#4ADE80",
     fontSize: 12,
