@@ -64,6 +64,7 @@ export default function AlertaScreen() {
           tipo: motivo,
           mensaje: motivo,
           ubicacion: direccionTexto,
+          fecha: new Date().toISOString(),
           latitud: location.coords.latitude,
           longitud: location.coords.longitude,
           usuarioId: userId,
@@ -71,7 +72,6 @@ export default function AlertaScreen() {
           redId: redActivaStr ? parseInt(redActivaStr) : 1,
         }),
       });
-
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.mensaje || "Error al enviar alerta");
