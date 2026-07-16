@@ -2,16 +2,16 @@ import { Ionicons } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
 import React from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
-// ✅ 1. Importar SafeAreaView y useSafeAreaInsets
+//1. Importar SafeAreaView y useSafeAreaInsets
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function PerfilUsuarioScreen() {
   const params = useLocalSearchParams();
-  // ✅ 2. Obtener los insets para aplicar padding dinámico
+  //2. Obtener los insets para aplicar padding dinámico
   const insets = useSafeAreaInsets();
 
   return (
-    // ✅ 3. Reemplazar View por SafeAreaView como contenedor raíz
+    //3. Reemplazar View por SafeAreaView como contenedor raíz
     <SafeAreaView style={styles.container}>
       <View style={[styles.header, { paddingTop: Math.max(insets.top + 10, 60) }]}>
         <TouchableOpacity onPress={() => router.back()}>
@@ -44,7 +44,7 @@ export default function PerfilUsuarioScreen() {
           <Text style={styles.value}>{params.contacto}</Text>
         </View>
 
-        {/* ✅ 4. Agregar padding inferior seguro al botón */}
+        {/*4. Agregar padding inferior seguro al botón */}
         <View style={{ paddingBottom: Math.max(insets.bottom, 20), width: '100%', alignItems: 'center' }}>
           <TouchableOpacity
             style={styles.btnMensaje}
