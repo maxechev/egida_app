@@ -13,7 +13,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { API_URL } from "../constants/urlApi"; // ✅ Importación correcta (eliminada la URL mal formada)
+import { API_URL } from "../constants/urlApi";
 
 // Configurar cómo se muestran las notificaciones
 Notifications.setNotificationHandler({
@@ -104,7 +104,7 @@ export default function ConfigNotificacionesScreen() {
     }
   };
 
-  // ✅ Tipado estricto para evitar errores de TypeScript
+  // Tipado estricto para evitar errores de TypeScript
   const actualizarCampo = async (campo: keyof typeof config, valor: any) => {
     const nuevaConfig = { ...config, [campo]: valor };
     setConfig(nuevaConfig);

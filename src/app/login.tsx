@@ -55,7 +55,7 @@ export default function LoginScreen() {
       console.log("TOKEN:", data.token);
       await SecureStore.setItemAsync("token", data.token);
 
-      // ✅ VERIFICAR SI YA HAY UNA RED GUARDADA
+      // VERIFICAR SI YA HAY UNA RED GUARDADA
       const redActivaExistente = await SecureStore.getItemAsync("redActivaId");
 
       if (redActivaExistente) {
@@ -63,7 +63,7 @@ export default function LoginScreen() {
       } else {
         console.log("⚠️ No hay red guardada. Buscando redes del usuario...");
 
-        // ✅ BUSCAR LAS REDES DEL USUARIO
+        // BUSCAR LAS REDES DEL USUARIO
         const redesResponse = await fetch(`${API_URL}/Red/mis-redes`, {
           headers: { Authorization: `Bearer ${data.token}` },
         });

@@ -92,7 +92,7 @@ export default function HistorialAlertasScreen() {
 
       if (!token || !redActiva) return;
 
-      // ✅ URL simplificada: solo filtramos por red activa
+      // URL simplificada: solo filtramos por red activa
       const url = `${API_URL}/Alerta?redId=${redActiva}`;
 
       const response = await fetch(url, {

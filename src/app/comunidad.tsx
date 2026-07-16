@@ -123,7 +123,7 @@ export default function ComunidadScreen() {
         ? item.alias.charAt(0).toUpperCase()
         : "U";
 
-    // ✅ Nombre a mostrar: prioriza el alias, si no hay, usa nombre+apellido, si no, "Usuario Anónimo"
+    //Nombre a mostrar: prioriza el alias, si no hay, usa nombre+apellido, si no, "Usuario Anónimo"
     const nombreMostrar =
       item.alias ||
       (item.nombre ? `${item.nombre} ${item.apellido}` : "Usuario Anónimo");
@@ -153,7 +153,7 @@ export default function ComunidadScreen() {
           <Text style={styles.usuarioNombre}>{nombreMostrar}</Text>
         </View>
 
-        {/* ✅ Badge de mensajes no leídos */}
+        {/*Badge de mensajes no leídos */}
         {noLeidos > 0 && (
           <View style={styles.badgeUsuario}>
             <Text style={styles.badgeUsuarioText}>

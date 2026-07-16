@@ -23,7 +23,7 @@ export default function Index() {
     checkAuth();
   }, []);
 
-  // Mientras verifica, no mostramos nada (o podrías poner un ActivityIndicator)
+  // Mientras verifica, no mostramos nada
   if (isChecking) {
     return null;
   }
