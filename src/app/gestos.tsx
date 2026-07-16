@@ -11,10 +11,8 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { API_URL } from "../constants/urlApi"; // ⚠️ Verificá que esta ruta sea correcta
-
+import { API_URL } from "../constants/urlApi";
 export default function ConfigGestosScreen() {
-  // 1. Unificamos el estado en un solo objeto para manejarlo mejor
   const [config, setConfig] = useState({
     gestoApagadoActivo: true,
     confirmacionRapida: true,
@@ -22,7 +20,6 @@ export default function ConfigGestosScreen() {
   });
   const [guardando, setGuardando] = useState(false);
 
-  // 2. Cargamos la configuración apenas se abre la pantalla
   useEffect(() => {
     cargarConfiguracion();
   }, []);
@@ -52,15 +49,12 @@ export default function ConfigGestosScreen() {
     }
   };
 
-  // 3. Función para guardar en la base de datos cada vez que algo cambia
   const guardarConfiguracion = async (nuevaConfig: typeof config) => {
     try {
       setGuardando(true);
       const token = await SecureStore.getItemAsync("token");
       if (!token) return;
 
-      // Enviamos TODA la configuración. Los campos de otras pantallas se envían con valores por defecto
-      // para que el backend no los sobrescriba o falle por campos nulos.
       await fetch(`${API_URL}/Configuracion/actualizar`, {
         method: "PUT",
         headers: {
@@ -89,7 +83,6 @@ export default function ConfigGestosScreen() {
     }
   };
 
-  // 4. Helper para actualizar el estado y guardar al mismo tiempo
   const actualizarCampo = (campo: keyof typeof config, valor: any) => {
     const nuevaConfig = { ...config, [campo]: valor };
     setConfig(nuevaConfig);

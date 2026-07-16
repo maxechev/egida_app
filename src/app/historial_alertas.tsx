@@ -92,7 +92,6 @@ export default function HistorialAlertasScreen() {
 
       if (!token || !redActiva) return;
 
-      // ✅ URL simplificada: solo filtramos por red activa
       const url = `${API_URL}/Alerta?redId=${redActiva}`;
 
       const response = await fetch(url, {
@@ -282,12 +281,12 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#1E293B",
   },
-  indicator: { width: 6 }, // ✅ El color se define inline
+  indicator: { width: 6 },
   content: { flex: 1, padding: 16 },
   hora: { color: "#FFF", fontSize: 18, fontWeight: "bold", marginBottom: 4 },
   ubicacion: { color: "#94A3B8", fontSize: 14, marginBottom: 6 },
   motivo: {
-    color: "#EF4444", // ✅ Color fijo de alerta
+    color: "#EF4444",
     fontSize: 13,
     fontWeight: "600",
     textTransform: "uppercase",

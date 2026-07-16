@@ -173,7 +173,7 @@ export default function HomeScreen() {
             motivo: alerta.tipo,
             coordenadas: { lat: alerta.latitud, lng: alerta.longitud },
             direccion: alerta.ubicacion,
-            timestamp: new Date(alerta.fecha),
+            fecha: alerta.fecha,
             userId: alerta.usuarioId.toString(),
             usuarioInfo: usuarioInfo,
             estado: alerta.estado,
@@ -243,10 +243,14 @@ export default function HomeScreen() {
               <AlertaDetalleCard
                 motivo={alertaSeleccionada.motivo}
                 userName={alertaSeleccionada.usuarioInfo.displayName}
-                hora={alertaSeleccionada.timestamp.toLocaleTimeString("es-AR", {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}
+                hora={new Date(alertaSeleccionada.fecha).toLocaleTimeString(
+                  "es-AR",
+                  {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    timeZone: "America/Argentina/Buenos_Aires",
+                  },
+                )}
                 ubicacionTexto={alertaSeleccionada.direccion}
               />
             )}

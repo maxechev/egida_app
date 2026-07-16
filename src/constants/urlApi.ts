@@ -1,4 +1,4 @@
-const LOCAL_IP = "192.168.1.10";
+const LOCAL_IP = "10.13.18.105";
 const PORT = 5285;
 
 export const API_URL = __DEV__

@@ -1,8 +1,8 @@
-import { API_URL } from "@/src/constants/urlApi"; // ✅ Importar API_URL
+import { API_URL } from "@/src/constants/urlApi";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import * as SecureStore from "expo-secure-store";
-import { useEffect, useState } from "react"; // ✅ Agregar useEffect
+import { useEffect, useState } from "react";
 import { Modal, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -13,7 +13,7 @@ export default function OpcionesScreen() {
 
   useEffect(() => {
     cargarMensajesNoLeidos();
-    const intervalo = setInterval(cargarMensajesNoLeidos, 5000); // Actualizar cada 5 seg
+    const intervalo = setInterval(cargarMensajesNoLeidos, 5000);
     return () => clearInterval(intervalo);
   }, []);
 

@@ -22,7 +22,6 @@ export default function EmergenciaScreen() {
   const [loading, setLoading] = useState(true);
   const [modalVisible, setModalVisible] = useState(false);
 
-  // Estado del formulario
   const [nombre, setNombre] = useState("");
   const [aliasUsuario, setAliasUsuario] = useState("");
   const [accion, setAccion] = useState("notificacion");
@@ -75,7 +74,7 @@ export default function EmergenciaScreen() {
         setNombre("");
         setAliasUsuario("");
         setAccion("notificacion");
-        cargarContactos(); // Recargar la lista
+        cargarContactos();
       } else {
         Alert.alert("Error", "No se pudo guardar el contacto.");
       }
@@ -190,7 +189,7 @@ export default function EmergenciaScreen() {
               placeholderTextColor="#94A3B8"
               value={aliasUsuario}
               onChangeText={setAliasUsuario}
-              autoCapitalize="none" // ✅ Importante para que no ponga mayúscula automática
+              autoCapitalize="none"
             />
 
             <View style={styles.pickerContainer}>

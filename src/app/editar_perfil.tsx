@@ -3,14 +3,14 @@ import { router } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import { useEffect, useState } from "react";
 import {
-    ActivityIndicator,
-    Alert,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Alert,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -21,7 +21,7 @@ export default function EditarPerfilScreen() {
   const [datos, setDatos] = useState({
     nombre: "",
     apellido: "",
-    correo: "", // Solo lectura
+    correo: "",
     contacto: "",
     ocupacion: "",
     alias: "",

@@ -39,7 +39,6 @@ export default function ChatRedScreen() {
   const flatListRef = useRef<FlatList>(null);
   const insets = useSafeAreaInsets();
 
-  // 1. Cargar red activa y mi ID
   useEffect(() => {
     const inicializar = async () => {
       const token = await SecureStore.getItemAsync("token");
@@ -75,7 +74,6 @@ export default function ChatRedScreen() {
     inicializar();
   }, []);
 
-  // 2. Polling de mensajes cada 4 segundos
   useEffect(() => {
     if (!redId || !miUsuarioId) return;
 
@@ -138,7 +136,6 @@ export default function ChatRedScreen() {
 
       if (response.ok) {
         setNuevoMensaje("");
-        // Recarga inmediata
         const res = await fetch(`${API_URL}/MensajeRed/${redId}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
@@ -158,7 +155,6 @@ export default function ChatRedScreen() {
     }
   };
 
-  // Agrupar mensajes consecutivos del mismo usuario
   const renderMensajesAgrupados = () => {
     const grupos: { nombre: string; mensajes: MensajeRed[] }[] = [];
 

@@ -26,12 +26,10 @@ export default function AlertaScreen() {
     setIsLoading(true);
 
     try {
-      // 1. Obtener token y red activa
       const token = await SecureStore.getItemAsync("token");
       const redActivaStr = await SecureStore.getItemAsync("redActivaId");
       if (!token) throw new Error("No hay sesión activa.");
 
-      // 2. Decodificar token para obtener userId
       const payload = JSON.parse(atob(token.split(".")[1]));
       const userId = parseInt(
         payload[
@@ -39,7 +37,6 @@ export default function AlertaScreen() {
         ],
       );
 
-      // 3. Obtener geolocalización
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== "granted")
         throw new Error("Permiso de ubicación requerido.");
@@ -48,7 +45,6 @@ export default function AlertaScreen() {
         accuracy: Location.Accuracy.High,
       });
 
-      // 4. Calcular dirección
       const [address] = await Location.reverseGeocodeAsync({
         latitude: location.coords.latitude,
         longitude: location.coords.longitude,
@@ -68,7 +64,6 @@ export default function AlertaScreen() {
           tipo: motivo,
           mensaje: motivo,
           ubicacion: direccionTexto,
-          fecha: new Date().toISOString(),
           latitud: location.coords.latitude,
           longitud: location.coords.longitude,
           usuarioId: userId,
@@ -118,7 +113,6 @@ export default function AlertaScreen() {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: "#10172B" }}>
       <View style={{ flex: 1, padding: 20 }}>
-        {/* Header */}
         <View
           style={{
             flexDirection: "row",
@@ -168,7 +162,6 @@ export default function AlertaScreen() {
           </Picker>
         </View>
 
-        {/* Botón */}
         <TouchableOpacity
           style={{
             backgroundColor: isLoading ? "#CC3333" : "#FF4444",

@@ -4,19 +4,19 @@ import { router, useLocalSearchParams } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import { useEffect, useRef, useState } from "react";
 import {
-    ActivityIndicator,
-    FlatList,
-    KeyboardAvoidingView,
-    Platform,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  FlatList,
+  KeyboardAvoidingView,
+  Platform,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import {
-    SafeAreaView,
-    useSafeAreaInsets,
+  SafeAreaView,
+  useSafeAreaInsets,
 } from "react-native-safe-area-context";
 
 interface Mensaje {
@@ -44,7 +44,6 @@ export default function ChatScreen() {
   const [mostrarNotificacion, setMostrarNotificacion] = useState(false);
   const [nuevoMensajeDe, setNuevoMensajeDe] = useState("");
 
-  // 1. Obtener mi ID al iniciar
   useEffect(() => {
     const obtenerMiId = async () => {
       const token = await SecureStore.getItemAsync("token");
@@ -61,11 +60,8 @@ export default function ChatScreen() {
     obtenerMiId();
   }, []);
 
-  // 2. Cargar mensajes y polling cada 4 segundos
-  // Estado para evitar notificación falsa al abrir el chat por primera vez
   const [esPrimeraCarga, setEsPrimeraCarga] = useState(true);
 
-  // 2. Cargar mensajes y polling cada 4 segundos
   useEffect(() => {
     if (!miUsuarioId) return;
 
@@ -98,8 +94,6 @@ export default function ChatScreen() {
           if (data.length > 0) {
             const ultimoMsg = data[data.length - 1];
 
-            // ✅ Solo mostrar notificación si NO es la primera carga,
-            // el mensaje es del otro, y el ID cambió
             if (
               !esPrimeraCarga &&
               ultimoMsg.remitenteId !== miUsuarioId &&
@@ -111,7 +105,6 @@ export default function ChatScreen() {
               setTimeout(() => setMostrarNotificacion(false), 3000);
             }
 
-            // Actualizamos el ID y marcamos que ya pasó la primera carga
             setUltimoMensajeId(ultimoMsg.id);
             if (esPrimeraCarga) setEsPrimeraCarga(false);
           }
@@ -183,7 +176,6 @@ export default function ChatScreen() {
     }
   };
 
-  // Agrupar mensajes consecutivos del mismo usuario
   const renderMensajesAgrupados = () => {
     const grupos: { esMio: boolean; mensajes: Mensaje[] }[] = [];
 
