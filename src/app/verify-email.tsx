@@ -12,9 +12,10 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import images from "../constants/imagePath";
+import { API_URL } from "../constants/urlApi";
 
 export default function VerifyEmailScreen() {
-  const [token, setToken] = useState("");
+  const [codigo, setCodigo] = useState("");
   const [correo, setCorreo] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
@@ -26,50 +27,48 @@ export default function VerifyEmailScreen() {
       if (savedEmail) {
         setCorreo(savedEmail);
       } else {
-        // Si no hay correo guardado, volver al registro
         router.replace("/register");
       }
     })();
   }, []);
 
   const verificarEmail = async () => {
-    if (!token.trim()) {
-      Alert.alert("Error", "Ingresá el código de verificación");
+    if (codigo.length !== 5) {
+      Alert.alert("Error", "El código debe tener exactamente 5 dígitos.");
       return;
     }
     if (!correo) {
-      Alert.alert("Error", "No se encontró el correo registrado");
+      Alert.alert("Error", "No se encontró el correo registrado.");
       return;
     }
 
     setIsLoading(true);
     try {
-      const response = await fetch(
-        "http://${API_URL}:5285/api/Auth/verificar-email",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            correo: correo,
-            token: token.trim(),
-          }),
-        },
-      );
+      const response = await fetch(`${API_URL}/Auth/verificar-email`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          correo: correo,
+          codigo: codigo.trim(),
+        }),
+      });
 
       const data = await response.json();
 
       if (response.ok) {
-        // Limpiar dato temporal
         await SecureStore.deleteItemAsync("pendingVerificationEmail");
         Alert.alert("Éxito", "Email verificado correctamente", [
           { text: "OK", onPress: () => router.replace("/login") },
         ]);
       } else {
-        Alert.alert("Error", data.mensaje || "Token inválido o expirado");
+        Alert.alert("Error", data.mensaje || "Código inválido o expirado.");
       }
     } catch (error) {
-      console.error(error);
-      Alert.alert("Error", "No se pudo conectar con el servidor");
+      console.error("Error de red:", error);
+      Alert.alert(
+        "Error",
+        "No se pudo conectar con el servidor. Verificá tu conexión.",
+      );
     } finally {
       setIsLoading(false);
     }
@@ -87,7 +86,7 @@ export default function VerifyEmailScreen() {
       <StatusBar style="light" />
 
       <TouchableOpacity
-        style={{ position: "absolute", left: 20, top: 50 }}
+        style={{ position: "absolute", left: 20, top: 50, zIndex: 10 }}
         onPress={() => router.back()}
       >
         <Text style={{ color: "white", fontSize: 30 }}>←</Text>
@@ -96,6 +95,7 @@ export default function VerifyEmailScreen() {
       <Image
         source={images.logoEgida}
         style={{ width: 180, height: 180, marginTop: 40 }}
+        resizeMode="contain"
       />
 
       <Text
@@ -115,39 +115,44 @@ export default function VerifyEmailScreen() {
           fontSize: 14,
           marginBottom: 30,
           textAlign: "center",
+          paddingHorizontal: 20,
         }}
       >
-        Se envió un código a: {"\n"}
+        Se envió un código de 5 dígitos a: {"\n"}
         <Text style={{ color: "#FFF", fontWeight: "bold" }}>{correo}</Text>
       </Text>
 
       <TextInput
-        placeholder="Código de verificación"
-        value={token}
-        onChangeText={setToken}
+        placeholder="00000"
+        value={codigo}
+        onChangeText={setCodigo}
         style={{
           backgroundColor: "#F0F0F2",
           width: "80%",
           maxWidth: 320,
-          height: 45,
+          height: 50,
           paddingHorizontal: 15,
-          borderRadius: 6,
+          borderRadius: 8,
           marginBottom: 20,
-          fontSize: 15,
+          fontSize: 20,
+          fontWeight: "bold",
+          letterSpacing: 8,
+          textAlign: "center",
           color: "#000",
         }}
-        keyboardType="default"
+        keyboardType="number-pad"
+        maxLength={5}
         autoCapitalize="none"
       />
 
       <TouchableOpacity
         style={{
-          backgroundColor: isLoading ? "#CCC" : "#F0F0F2",
+          backgroundColor: isLoading ? "#64748B" : "#F0F0F2",
           width: 170,
-          height: 40,
+          height: 45,
           justifyContent: "center",
           alignItems: "center",
-          borderRadius: 6,
+          borderRadius: 8,
         }}
         onPress={verificarEmail}
         disabled={isLoading}
@@ -155,7 +160,7 @@ export default function VerifyEmailScreen() {
         {isLoading ? (
           <ActivityIndicator color="#10172B" />
         ) : (
-          <Text style={{ color: "#10172B", fontWeight: "bold" }}>
+          <Text style={{ color: "#10172B", fontWeight: "bold", fontSize: 16 }}>
             Verificar
           </Text>
         )}

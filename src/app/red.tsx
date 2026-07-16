@@ -12,7 +12,7 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { API_URL } from '../constants/urlApi';
+import { API_URL } from "../constants/urlApi";
 
 interface Red {
   id: number;
@@ -36,21 +36,17 @@ export default function RedesScreen() {
       if (!token) return;
 
       const response = await fetch(`${API_URL}/Red/mis-redes`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
       });
 
       if (response.ok) {
         const data = await response.json();
         setRedes(data);
 
-        // Obtener red activa guardada
         const redActiva = await SecureStore.getItemAsync("redActivaId");
         if (redActiva) {
-          setRedActivaId(parseInt(redActiva));
+          setRedActivaId(parseInt(redActiva, 10));
         } else if (data.length > 0) {
-          // Si no hay red activa, usar la primera
           setRedActivaId(data[0].id);
           await SecureStore.setItemAsync("redActivaId", data[0].id.toString());
         }
@@ -100,38 +96,56 @@ export default function RedesScreen() {
         <TouchableOpacity onPress={() => router.back()}>
           <Text style={styles.backIcon}>←</Text>
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Redes</Text>
+        <Text style={styles.headerTitle}>Mis Redes</Text>
       </View>
 
       <View style={styles.list}>
-        {redes.map((red) => (
-          <View key={red.id} style={styles.redItem}>
-            <View style={styles.redInfo}>
-              <Text style={styles.redNombre}>
-                {red.nombre.length > 20
-                  ? red.nombre.substring(0, 20) + "..."
-                  : red.nombre}
-              </Text>
-              <Text style={styles.redTipo}>{red.tipoRed}</Text>
-            </View>
+        {redes.length === 0 ? (
+          <Text style={styles.emptyText}>
+            No pertenecés a ninguna red todavía.{"\n"}
+            Creá una nueva para comenzar.
+          </Text>
+        ) : (
+          redes.map((red) => {
+            const esLaActiva = Number(redActivaId) === Number(red.id);
 
-            {redActivaId === red.id ? (
-              <View style={styles.badgeActual}>
-                <Text style={styles.badgeText}>Actual</Text>
+            return (
+              <View key={red.id} style={styles.redItem}>
+                <View style={styles.redInfo}>
+                  <Text style={styles.redNombre}>
+                    {red.nombre.length > 20
+                      ? red.nombre.substring(0, 20) + "..."
+                      : red.nombre}
+                  </Text>
+                  <Text style={styles.redTipo}>{red.tipoRed}</Text>
+                </View>
+
+                {esLaActiva ? (
+                  <View style={styles.badgeActual}>
+                    <Text style={styles.badgeText}>Actual</Text>
+                  </View>
+                ) : (
+                  <TouchableOpacity
+                    style={styles.btnCambiar}
+                    onPress={() => confirmarCambioRed(red)}
+                  >
+                    <Text style={styles.btnCambiarText}>Cambiar</Text>
+                  </TouchableOpacity>
+                )}
               </View>
-            ) : (
-              <TouchableOpacity
-                style={styles.btnCambiar}
-                onPress={() => confirmarCambioRed(red)}
-              >
-                <Text style={styles.btnCambiarText}>Cambiar</Text>
-              </TouchableOpacity>
-            )}
-          </View>
-        ))}
+            );
+          })
+        )}
       </View>
 
-      {/* Modal de confirmación */}
+      <TouchableOpacity
+        style={styles.fab}
+        onPress={() => router.push("/unirse_red")}
+      >
+        <Text style={styles.fabIcon}></Text>
+        <Text style={styles.fabText}>Unirse</Text>
+      </TouchableOpacity>
+
       <Modal visible={!!redSeleccionada} transparent animationType="fade">
         <Pressable
           style={styles.modalOverlay}
@@ -161,20 +175,20 @@ export default function RedesScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#10172B",
-  },
+  container: { flex: 1, backgroundColor: "#10172B" },
   loadingContainer: {
     flex: 1,
     backgroundColor: "#10172B",
     justifyContent: "center",
     alignItems: "center",
   },
-  loadingText: {
+  loadingText: { color: "#94A3B8", marginTop: 15, fontSize: 16 },
+  emptyText: {
     color: "#94A3B8",
-    marginTop: 15,
+    textAlign: "center",
+    marginTop: 40,
     fontSize: 16,
+    lineHeight: 22,
   },
   header: {
     flexDirection: "row",
@@ -183,21 +197,9 @@ const styles = StyleSheet.create({
     paddingTop: 20,
     paddingBottom: 10,
   },
-  backIcon: {
-    color: "white",
-    fontSize: 30,
-    marginRight: 15,
-  },
-  headerTitle: {
-    color: "white",
-    fontSize: 22,
-    fontWeight: "bold",
-  },
-  list: {
-    flex: 1,
-    padding: 20,
-    gap: 15,
-  },
+  backIcon: { color: "white", fontSize: 30, marginRight: 15 },
+  headerTitle: { color: "white", fontSize: 22, fontWeight: "bold" },
+  list: { flex: 1, padding: 20, gap: 15 },
   redItem: {
     flexDirection: "row",
     alignItems: "center",
@@ -206,41 +208,28 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 15,
   },
-  redInfo: {
-    flex: 1,
-  },
+  redInfo: { flex: 1 },
   redNombre: {
     fontSize: 16,
     fontWeight: "bold",
     color: "#10172B",
     marginBottom: 5,
   },
-  redTipo: {
-    fontSize: 12,
-    color: "#666",
-  },
+  redTipo: { fontSize: 12, color: "#666" },
   badgeActual: {
     backgroundColor: "#4CAF50",
     paddingHorizontal: 15,
     paddingVertical: 8,
     borderRadius: 6,
   },
-  badgeText: {
-    color: "white",
-    fontWeight: "bold",
-    fontSize: 12,
-  },
+  badgeText: { color: "white", fontWeight: "bold", fontSize: 12 },
   btnCambiar: {
     backgroundColor: "#1E293B",
     paddingHorizontal: 15,
     paddingVertical: 8,
     borderRadius: 6,
   },
-  btnCambiarText: {
-    color: "white",
-    fontWeight: "bold",
-    fontSize: 12,
-  },
+  btnCambiarText: { color: "white", fontWeight: "bold", fontSize: 12 },
   modalOverlay: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.7)",
@@ -280,11 +269,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     alignItems: "center",
   },
-  btnCancelText: {
-    color: "white",
-    fontWeight: "bold",
-    fontSize: 14,
-  },
+  btnCancelText: { color: "white", fontWeight: "bold", fontSize: 14 },
   btnAceptar: {
     flex: 1,
     backgroundColor: "#FF4444",
@@ -292,9 +277,23 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     alignItems: "center",
   },
-  btnAceptarText: {
-    color: "white",
-    fontWeight: "bold",
-    fontSize: 14,
+  btnAceptarText: { color: "white", fontWeight: "bold", fontSize: 14 },
+  fab: {
+    position: "absolute",
+    bottom: 30,
+    right: 30,
+    backgroundColor: "#FF4444",
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 14,
+    paddingHorizontal: 22,
+    borderRadius: 30,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 8,
   },
+  fabIcon: { color: "white", fontSize: 26, fontWeight: "bold", marginRight: 8 },
+  fabText: { color: "white", fontSize: 16, fontWeight: "bold" },
 });

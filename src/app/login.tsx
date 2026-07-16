@@ -34,11 +34,7 @@ export default function LoginScreen() {
     setIsLoading(true);
 
     try {
-      console.log("1. Iniciando login");
-      console.log("2. Enviando petición a:", `${API_URL}/Auth/login`); // ✅ Para ver a dónde apunta
-
       const response = await fetch(`${API_URL}/Auth/login`, {
-        // ✅ 2. Usamos la variable
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -50,8 +46,6 @@ export default function LoginScreen() {
       });
 
       const data = await response.json();
-      console.log("STATUS:", response.status);
-      console.log("BODY:", data);
 
       if (!response.ok) {
         Alert.alert("Error", data.mensaje || "Error al iniciar sesión");
@@ -60,10 +54,41 @@ export default function LoginScreen() {
 
       console.log("TOKEN:", data.token);
       await SecureStore.setItemAsync("token", data.token);
-      await SecureStore.setItemAsync(
-        "redActivaId",
-        data.redId?.toString() || "1",
-      ); // Por si las dudas
+
+      // ✅ VERIFICAR SI YA HAY UNA RED GUARDADA
+      const redActivaExistente = await SecureStore.getItemAsync("redActivaId");
+
+      if (redActivaExistente) {
+        console.log("✅ Usando redActivaId guardada:", redActivaExistente);
+      } else {
+        console.log("⚠️ No hay red guardada. Buscando redes del usuario...");
+
+        // ✅ BUSCAR LAS REDES DEL USUARIO
+        const redesResponse = await fetch(`${API_URL}/Red/mis-redes`, {
+          headers: { Authorization: `Bearer ${data.token}` },
+        });
+
+        if (redesResponse.ok) {
+          const redes = await redesResponse.json();
+          console.log(" Redes encontradas:", redes);
+
+          if (redes.length > 0) {
+            // Guardar la primera red como activa
+            await SecureStore.setItemAsync(
+              "redActivaId",
+              redes[0].id.toString(),
+            );
+            console.log(" Red activa guardada automáticamente:", redes[0].id);
+          } else {
+            console.log("⚠️ El usuario no pertenece a ninguna red");
+            Alert.alert(
+              "Sin redes",
+              "No pertenecés a ninguna red todavía. Unite a una desde el menú.",
+              [{ text: "OK" }],
+            );
+          }
+        }
+      }
 
       router.replace("/home");
     } catch (error: any) {

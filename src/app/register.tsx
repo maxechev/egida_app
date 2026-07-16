@@ -4,19 +4,19 @@ import * as SecureStore from "expo-secure-store";
 import { StatusBar } from "expo-status-bar";
 import React, { useState } from "react";
 import {
-    Alert,
-    Image,
-    Modal,
-    Platform,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  Alert,
+  Image,
+  Modal,
+  Platform,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import images from "../constants/imagePath";
-import { API_URL } from '../constants/urlApi';
+import { API_URL } from "../constants/urlApi";
 
 export default function RegisterScreen() {
   const [email, setEmail] = useState("");
@@ -51,7 +51,6 @@ export default function RegisterScreen() {
   };
 
   const register = async () => {
-    // Validaciones
     if (
       !nombre ||
       !apellido ||
@@ -102,19 +101,18 @@ export default function RegisterScreen() {
       });
 
       const data = await response.json();
+
       if (!response.ok) {
         Alert.alert("Error", data.mensaje || "Error al registrarse");
         return;
       }
-      // Guardar la red a la que se unió como red activa
+
       if (data.redId) {
         await SecureStore.setItemAsync("redActivaId", data.redId.toString());
       }
 
-      // Guardar correo para la siguiente pantalla
       await SecureStore.setItemAsync("pendingVerificationEmail", email);
 
-      // Navegar a verificación
       router.replace("/verify-email");
     } catch (error: any) {
       console.error("Error en registro:", error);

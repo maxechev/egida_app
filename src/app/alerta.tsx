@@ -84,25 +84,29 @@ export default function AlertaScreen() {
 
       console.log(`✅ Alerta enviada: ${motivo} | 📍 ${direccionTexto}`);
       router.replace("/home");
-      // ... (código existente)
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.mensaje || "Error al enviar alerta");
+      const data = await response.json();
+
+      if (response.ok) {
+        setIsLoading(false);
+
+        Alert.alert(
+          "¡Alerta Enviada!",
+          "Tu alerta fue registrada y notificada a tus contactos de emergencia.",
+          [
+            {
+              text: "Entendido",
+              onPress: () => {
+                router.replace("/home");
+              },
+            },
+          ],
+        );
+      } else {
+        setIsLoading(false);
+        console.error("Error del backend:", data);
+        Alert.alert("Error", data.mensaje || "No se pudo enviar la alerta.");
       }
-
-      console.log(`✅ Alerta enviada: ${motivo} | 📍 ${direccionTexto}`);
-
-      Alert.alert(
-        "¡Alerta Enviada!",
-        "Su alerta ha sido enviada exitosamente.",
-        [
-          {
-            text: "Entendido",
-            onPress: () => router.replace("/home"),
-          },
-        ],
-      );
     } catch (error: any) {
       console.error(" Error:", error.message);
       Alert.alert("Error", error.message || "No se pudo enviar la alerta.");
@@ -133,7 +137,6 @@ export default function AlertaScreen() {
           </Text>
         </View>
 
-        {/* Selector */}
         <View
           style={{
             backgroundColor: "white",
