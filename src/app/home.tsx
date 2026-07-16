@@ -1,10 +1,9 @@
 import * as Location from "expo-location";
 import { router, useFocusEffect } from "expo-router";
 import * as SecureStore from "expo-secure-store";
-import { useCallback, useEffect, useRef, useState } from "react"; // ✅ Agregado useCallback
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
   Modal,
   Pressable,
   StyleSheet,
@@ -50,7 +49,8 @@ export default function HomeScreen() {
   const [alertas, setAlertas] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [alertaSeleccionada, setAlertaSeleccionada] = useState<any>(null);
-  const [redActivaId, setRedActivaId] = useState<number>(1);
+
+  const [redActivaId, setRedActivaId] = useState<number | null>(null);
   const [redActivaNombre, setRedActivaNombre] = useState<string>("Cargando...");
 
   const mapRef = useRef<MapView>(null);
@@ -61,10 +61,6 @@ export default function HomeScreen() {
       try {
         const { status } = await Location.requestForegroundPermissionsAsync();
         if (status !== "granted") {
-          Alert.alert(
-            "Permiso requerido",
-            "Necesitamos tu ubicación para mostrar alertas cercanas.",
-          );
           setRegion({
             latitude: -27.4514,
             longitude: -58.9867,
@@ -86,28 +82,38 @@ export default function HomeScreen() {
     })();
   }, []);
 
-  useEffect(() => {
-    (async () => {
-      const redActiva = await SecureStore.getItemAsync("redActivaId");
-      if (redActiva) {
-        const redId = parseInt(redActiva);
-        setRedActivaId(redId);
+  useFocusEffect(
+    useCallback(() => {
+      const cargarNombreRed = async () => {
         try {
-          const token = await SecureStore.getItemAsync("token");
-          const response = await fetch(`${API_URL}/Red/${redId}`, {
-            headers: { Authorization: `Bearer ${token}` },
-          });
-          if (response.ok) {
-            const data = await response.json();
-            setRedActivaNombre(data.nombre);
+          const redActivaStr = await SecureStore.getItemAsync("redActivaId");
+          console.log("🔍 Red Activa leída en Home:", redActivaStr);
+          if (redActivaStr) {
+            const redId = parseInt(redActivaStr, 10);
+            setRedActivaId(redId);
+
+            const token = await SecureStore.getItemAsync("token");
+            const response = await fetch(`${API_URL}/Red/${redId}`, {
+              headers: { Authorization: `Bearer ${token}` },
+            });
+
+            if (response.ok) {
+              const data = await response.json();
+              setRedActivaNombre(data.nombre);
+            } else {
+              setRedActivaNombre("Red desconocida");
+            }
+          } else {
+            setRedActivaNombre("Sin red");
           }
         } catch (error) {
           console.error("Error al cargar nombre de red:", error);
-          setRedActivaNombre("Red");
         }
-      }
-    })();
-  }, []);
+      };
+
+      cargarNombreRed();
+    }, []),
+  );
 
   useFocusEffect(
     useCallback(() => {
@@ -116,11 +122,6 @@ export default function HomeScreen() {
       }
     }, [region, redActivaId]),
   );
-
-  useEffect(() => {
-    if (!region) return;
-    cargarAlertas();
-  }, [region, redActivaId]);
 
   const cargarAlertas = async () => {
     try {
@@ -142,7 +143,6 @@ export default function HomeScreen() {
       const alertasProcesadas = await Promise.all(
         alertasData.map(async (alerta: any) => {
           let usuarioInfo = { displayName: "Vecino Anónimo" };
-
           if (!usuariosCache.current[alerta.usuarioId]) {
             try {
               const token = await SecureStore.getItemAsync("token");
@@ -155,18 +155,15 @@ export default function HomeScreen() {
               if (userResponse.ok) {
                 const userData = await userResponse.json();
                 let displayName = "Vecino Anónimo";
-                if (userData.nombre) {
+                if (userData.nombre)
                   displayName = `${userData.nombre} ${userData.apellido}`;
-                } else if (userData.alias) {
-                  displayName = userData.alias;
-                }
+                else if (userData.alias) displayName = userData.alias;
                 usuariosCache.current[alerta.usuarioId] = { displayName };
               }
             } catch (e) {
               console.error("Error al cargar usuario:", e);
             }
           }
-
           usuarioInfo = usuariosCache.current[alerta.usuarioId] || {
             displayName: "Vecino Anónimo",
           };
@@ -189,12 +186,11 @@ export default function HomeScreen() {
       setLoading(false);
     } catch (error) {
       console.error("Error al cargar alertas:", error);
-      Alert.alert("Error", "No se pudieron cargar las alertas");
       setLoading(false);
     }
   };
 
-  if (!region || loading) {
+  if (!region || loading || redActivaId === null) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#FF4444" />
@@ -234,7 +230,6 @@ export default function HomeScreen() {
         ))}
       </MapView>
 
-      {/* OVERLAY DE DETALLE */}
       <Modal visible={!!alertaSeleccionada} transparent animationType="fade">
         <Pressable
           style={styles.modalOverlay}
@@ -265,7 +260,6 @@ export default function HomeScreen() {
         </Pressable>
       </Modal>
 
-      {/* ✅ 3. Controles Superiores: Usamos insets.top para empujarlos debajo de la muesca */}
       <TouchableOpacity
         style={[styles.menuBtn, { top: 15 + insets.top }]}
         onPress={() => router.push("/opciones")}
@@ -283,7 +277,6 @@ export default function HomeScreen() {
         </TouchableOpacity>
       </View>
 
-      {/* ✅ 4. Botón Enviar Alerta: Usamos insets.bottom para evitar el indicador de inicio de iOS */}
       <TouchableOpacity
         style={[styles.sendAlertBtn, { bottom: 20 + insets.bottom }]}
         onPress={() => router.push("/alerta")}
@@ -322,7 +315,6 @@ const styles = StyleSheet.create({
   },
   closeText: { color: "#FFF", fontWeight: "bold", fontSize: 14 },
 
-  // ✅ Se eliminaron los "top: 60" fijos de aquí, ahora se manejan dinámicamente con inline styles
   menuBtn: {
     position: "absolute",
     left: 20,
@@ -362,7 +354,6 @@ const styles = StyleSheet.create({
     textShadowRadius: 3,
   },
 
-  // ✅ Se eliminó el "bottom: 40" fijo, ahora se maneja dinámicamente
   sendAlertBtn: {
     position: "absolute",
     alignSelf: "center",

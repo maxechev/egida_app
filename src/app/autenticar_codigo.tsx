@@ -1,18 +1,18 @@
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useState } from "react";
 import {
-    ActivityIndicator,
-    Alert,
-    Image,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Alert,
+  Image,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import images from "../constants/imagePath";
-import { API_URL } from '../constants/urlApi';
+import { API_URL } from "../constants/urlApi";
 
 const AutenticarCodigo = () => {
   const { email } = useLocalSearchParams();
@@ -43,7 +43,6 @@ const AutenticarCodigo = () => {
       const data = await response.json();
 
       if (response.ok && data.valido) {
-        // Código válido, pasar a cambiar contraseña
         router.replace({
           pathname: "/recuperar_contrasenia",
           params: {
