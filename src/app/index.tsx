@@ -9,7 +9,6 @@ export default function Index() {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        // Verificamos si existe un token guardado
         const token = await SecureStore.getItemAsync("token");
         setIsLoggedIn(!!token);
       } catch (error) {
@@ -23,12 +22,10 @@ export default function Index() {
     checkAuth();
   }, []);
 
-  // Mientras verifica, no mostramos nada
   if (isChecking) {
     return null;
   }
 
-  // Si hay token, va al home. Si no, va al login.
   if (isLoggedIn) {
     return <Redirect href="/home" />;
   }

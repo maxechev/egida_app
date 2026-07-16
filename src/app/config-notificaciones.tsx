@@ -15,7 +15,6 @@ import {
 } from "react-native";
 import { API_URL } from "../constants/urlApi";
 
-// Configurar cómo se muestran las notificaciones
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
     shouldShowAlert: true,
@@ -63,7 +62,6 @@ export default function ConfigNotificacionesScreen() {
         setConfig({
           notificacionesActivas: data.notificacionesActivas ?? true,
           vibracionNotificaciones: data.vibracionNotificaciones ?? true,
-          // ✅ Manejo seguro: si es string, lo separa; si ya es array, lo usa
           tiposAlertaNotificacion:
             typeof data.tiposAlertaNotificacion === "string"
               ? data.tiposAlertaNotificacion.split(",")
@@ -104,14 +102,12 @@ export default function ConfigNotificacionesScreen() {
     }
   };
 
-  // Tipado estricto para evitar errores de TypeScript
   const actualizarCampo = async (campo: keyof typeof config, valor: any) => {
     const nuevaConfig = { ...config, [campo]: valor };
     setConfig(nuevaConfig);
     guardarConfiguracion(nuevaConfig);
   };
 
-  // Solicitar permisos de notificación
   const solicitarPermisos = async (): Promise<boolean> => {
     const { status: existingStatus } =
       await Notifications.getPermissionsAsync();
@@ -129,7 +125,6 @@ export default function ConfigNotificacionesScreen() {
     return true;
   };
 
-  // Toggle de notificaciones con permisos
   const toggleNotificaciones = async (valor: boolean) => {
     if (valor) {
       const tienePermisos = await solicitarPermisos();
@@ -138,7 +133,6 @@ export default function ConfigNotificacionesScreen() {
     actualizarCampo("notificacionesActivas", valor);
   };
 
-  // Toggle de alertas específicas
   const toggleAlerta = (item: string) => {
     const nuevasAlertas = config.tiposAlertaNotificacion.includes(item)
       ? config.tiposAlertaNotificacion.filter((x) => x !== item)
@@ -354,7 +348,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   checked: {
-    backgroundColor: "#FF4444", // ✅ Check rojo cuando está activo
+    backgroundColor: "#FF4444",
     borderColor: "#FF4444",
   },
   check: {

@@ -52,7 +52,6 @@ export default function UnirseRedScreen() {
       const data = await response.json();
 
       if (response.ok) {
-        // Guardar la nueva red como activa
         await SecureStore.setItemAsync("redActivaId", data.redId.toString());
 
         Alert.alert(

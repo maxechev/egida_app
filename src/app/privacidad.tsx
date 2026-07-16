@@ -16,7 +16,6 @@ export default function PrivacidadScreen() {
   const [loading, setLoading] = useState(true);
   const [guardando, setGuardando] = useState(false);
 
-  //Unificamos la configuración en un solo objeto
   const [config, setConfig] = useState({
     mostrarNombre: true,
     mostrarUbicacion: true,
@@ -60,7 +59,6 @@ export default function PrivacidadScreen() {
       const token = await SecureStore.getItemAsync("token");
       if (!token) return;
 
-      //Enviamos TODA la configuración para que el backend no falle por campos nulos
       await fetch(`${API_URL}/Configuracion/actualizar`, {
         method: "PUT",
         headers: {
@@ -89,7 +87,6 @@ export default function PrivacidadScreen() {
     }
   };
 
-  //Tipado estricto para evitar errores de TypeScript
   const actualizarCampo = (campo: keyof typeof config, valor: boolean) => {
     const nuevaConfig = { ...config, [campo]: valor };
     setConfig(nuevaConfig);

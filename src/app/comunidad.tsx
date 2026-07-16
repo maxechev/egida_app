@@ -15,7 +15,7 @@ import {
 
 interface UsuarioComunidad {
   id: number;
-  nombre: string | null; // ✅ Ahora puede ser null por privacidad
+  nombre: string | null;
   apellido: string | null;
   correo: string;
   contacto: string | null;
@@ -123,7 +123,6 @@ export default function ComunidadScreen() {
         ? item.alias.charAt(0).toUpperCase()
         : "U";
 
-    //Nombre a mostrar: prioriza el alias, si no hay, usa nombre+apellido, si no, "Usuario Anónimo"
     const nombreMostrar =
       item.alias ||
       (item.nombre ? `${item.nombre} ${item.apellido}` : "Usuario Anónimo");
@@ -136,8 +135,8 @@ export default function ComunidadScreen() {
             pathname: "/perfil_usuario",
             params: {
               id: item.id,
-              nombre: item.nombre || "Usuario",
-              apellido: item.apellido || "Anónimo",
+              nombre: item.nombre || "Oculto",
+              apellido: item.apellido || "Oculto",
               alias: item.alias || "",
               correo: item.correo,
               contacto: item.contacto || "Oculto",
@@ -190,7 +189,6 @@ export default function ComunidadScreen() {
           headers: { Authorization: `Bearer ${token}` },
         },
       );
-      // Recargar conteos
       cargarMensajesNoLeidos();
     } catch (error) {
       console.error("Error marcando como leído:", error);
